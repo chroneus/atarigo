@@ -1,6 +1,12 @@
 *.class
 
 # Package Files #
+<<<<<<< HEAD
+*.war
+*.ear
+/target
+=======
 *.jar
 *.war
 *.ear
+>>>>>>> branch 'master' of https://github.com/chroneus/atarigo.git
