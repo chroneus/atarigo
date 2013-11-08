@@ -257,32 +257,56 @@ public class BitBoard implements Cloneable {
 	 * also use it for influence
 	 */
 	public  BitBoard nearest_stones() {
+		BitBoard firstresult=this.get_left_nearest_stones();
+		firstresult.or(this.get_right_nearest_stones());
+		firstresult.or(this.get_top_nearest_stones());
+		firstresult.or(this.get_top_nearest_stones());
+		firstresult.andNot(this);
+		return firstresult;
+	}
+	public  BitBoard diagonal_nearest_stones() {
+		BitBoard firstresult=this.get_left_nearest_stones().get_top_nearest_stones();
+		firstresult.or(this.get_left_nearest_stones().get_bottom_nearest_stones());
+		firstresult.or(this.get_right_nearest_stones().get_top_nearest_stones());
+		firstresult.or(this.get_right_nearest_stones().get_bottom_nearest_stones());
+		firstresult.andNot(this);
+		return firstresult;
+	}
+	
+	
+	public BitBoard get_left_nearest_stones(){
 		BitBoard leftresult=(BitBoard) this.clone();
 		leftresult.andNot(BoardConstant.LeftBorder);
 		leftresult.a0>>>=1;
 		leftresult.a0 |= ((leftresult.a1&1L) << 63);
 		leftresult.a1=((leftresult.a1>>>1)&mask)|(leftresult.a1&~mask);	
+		return leftresult;
+	}
+	public BitBoard get_right_nearest_stones(){
 		BitBoard rightresult=(BitBoard) this.clone();
 		rightresult.andNot(BoardConstant.RightBorder);
 		rightresult.a1=((rightresult.a1<<1)&mask)|(rightresult.a1&~mask);
 		rightresult.a1|=((rightresult.a0&-1L)>>>63);
 		rightresult.a0<<=1;
-		leftresult.or(rightresult);
-		
+		return rightresult;
+	}
+	public BitBoard get_top_nearest_stones(){
 		BitBoard topresult=(BitBoard) this.clone();
 		topresult.andNot(BoardConstant.TopBorder);
 		topresult.a0>>>=9;
 		topresult.a0 |=( (topresult.a1&511L) << 55);
-		topresult.a1=((topresult.a1>>>9)&mask)|(topresult.a1&~mask);	
-		leftresult.or(topresult);
+		topresult.a1=((topresult.a1>>>9)&mask)|(topresult.a1&~mask);
+		return topresult;
+	}
+	public BitBoard get_bottom_nearest_stones(){
 		BitBoard bottomresult=(BitBoard) this.clone();
 		bottomresult.andNot(BoardConstant.BottomBorder);
 		bottomresult.a1=((bottomresult.a1<<9)&mask)|(bottomresult.a1&~mask);
 		bottomresult.a1|=((bottomresult.a0&-1L)>>>55);
 		bottomresult.a0<<=9;
-		leftresult.or(bottomresult);
-		leftresult.andNot(this);
-		return leftresult;
+		return bottomresult;
 	}
+	
+
 
 }
