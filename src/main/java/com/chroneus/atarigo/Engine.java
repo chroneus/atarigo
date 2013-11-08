@@ -17,7 +17,7 @@ public class Engine {
 	}
 
 	/**
-	 * play random from set
+	 * play random from possible variants
 	 */
 	public Integer playRandomMove(BitBoard set) {
 		if (set.isEmpty())
@@ -41,7 +41,6 @@ public class Engine {
 	 * if can kill any group check if my group alive maximize territory consider
 	 * moves as good shape, good line, max territory
 	 */
-
 	public String doMove(Board board) {
 		if (this.result != null) {
 			if (this.result == 1)
@@ -82,7 +81,12 @@ public class Engine {
 			return "resign";
 		return Board.convertToGTPMove(best_move);
 	}
-
+    
+	/**
+	 * subset of  @param possible_moves on @param board
+	 * which contains several (move_to_consider_after_random)best moves 
+	 * from a point of series of random game
+	 */
 	int[] filterBoardWithRandom(Board board, BitBoard possible_moves) {
 		int[] filtered_moves = new int[move_to_consider_after_random];
 		int[] filtered_moves_values = new int[move_to_consider_after_random];
@@ -108,7 +112,7 @@ public class Engine {
 	}
 
 	/**
-	 * percentage white win
+	 * returns normalized white score (-100..+100)
 	 */
 	int testBoardOnRandomPlay(Board board, int move, int number_of_attempt) {
 		Board newboard = (Board) board.clone();
@@ -124,6 +128,10 @@ public class Engine {
 				: (black_wins - white_wins) * 100 / number_of_attempt;
 	}
 
+	
+	/**
+	 * counting function
+	 */
 	int countBoard(Board board) {
 		int myliberties = 0;
 		BitBoard[] connected = board.connectedGroup(!board.is_white_next);
@@ -149,7 +157,9 @@ public class Engine {
 
 		return myliberties - opponentliberties + countTerritory(board);
 	}
-
+   /**
+    * score territory
+    */
 	public int countTerritory(Board testboard) {
 		Board board = (Board) testboard.clone();
 		while (board.white.cardinality() + board.black.cardinality() < SIZE
@@ -201,6 +211,9 @@ public class Engine {
 		return null;
 	}
 
+	/**
+	 * get all points which is not settled
+	 */
 	public BitBoard getClearCells(Board board) {
 		BitBoard moves = new BitBoard();
 		moves.not();
@@ -209,7 +222,10 @@ public class Engine {
 
 		return moves;
 	}
-
+    
+	/**
+	 * consider self-atari and ladders
+	 */
 	public BitBoard getAllPossibleMoves(Board board) {
 		BitBoard moves = getClearCells(board);
 		
@@ -267,7 +283,7 @@ public class Engine {
 		return moves;
 	}
 
-	// check ladder or net
+	// check ladder or net (liberty count =2)
 	BitBoard checkLadder(Board board, BitBoard groupToKill) {
 
 		BitBoard liberty_move = board.getLiberties(groupToKill);
@@ -303,11 +319,27 @@ public class Engine {
 		return null;
 
 	}
-
+    
+	/**
+	 * try to capture weak stones
+	 * TODO
+	 */
+	int semeai(Board board,BitBoard stone_group){
+		if(board.getEyes(stone_group).cardinality()>1) return -1;
+		BitBoard near_moves = stone_group.nearest_stones();
+		near_moves.and(getAllPossibleMoves(board));
+		for (int i = near_moves.nextSetBit(0); i >= 0; i = near_moves.nextSetBit(i + 1)) {
+			board.play_move(i);
+			if(semeai(board,stone_group)>0) return i;
+			board.undo_move(i);
+		}
+		return -1;
+	}
+	
 	/**
 	 * @see http://en.wikipedia.org/wiki/Negascout
 	 */
-	int pvs(Board board, int depth, int α, int β) {
+	 int pvs(Board board, int depth, int α, int β) {
 		node_processed++;
 		if (DEBUG && node_processed % 1000 == 0)
 			System.out.println(node_processed);
@@ -320,15 +352,9 @@ public class Engine {
 			int score;
 			board.play_move(i);
 			if (i != filtered[0]) {
-				score = -pvs(board, depth - 1, -α - 1, -α);// search
-																		// with
-																		// a
-																		// null
-																		// window
+				score = -pvs(board, depth - 1, -α - 1, -α);// search with a null window
 				if (α < score && score < β) // if it failed high,
-					score = -pvs(board, depth - 1, -β, -α); // do a
-																		// full
-																		// re-search
+					score = -pvs(board, depth - 1, -β, -α); // do a full re-search
 			} else
 				score = -pvs(board, depth - 1, -β, -α);
 			α = Math.max(α, score);
