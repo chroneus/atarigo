@@ -260,7 +260,7 @@ public class BitBoard implements Cloneable {
 		BitBoard firstresult=this.get_left_nearest_stones();
 		firstresult.or(this.get_right_nearest_stones());
 		firstresult.or(this.get_top_nearest_stones());
-		firstresult.or(this.get_top_nearest_stones());
+		firstresult.or(this.get_bottom_nearest_stones());
 		firstresult.andNot(this);
 		return firstresult;
 	}

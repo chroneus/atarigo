@@ -107,7 +107,7 @@ public class BitBoardTest {
 @Test	
 	public  void testNearStone(){
 	
-	    BoardConstant.ALL.nearest_stones();
+	    assertTrue(BoardConstant.ALL.nearest_stones().equals(new BitBoard()));
 		assertTrue(BoardConstant.FirstLine.nearest_stones().equals(BoardConstant.SecondLine));
 		int size=1000000;
 		BitBoard[]perf_array=new BitBoard[size];

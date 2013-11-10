@@ -3,12 +3,11 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.chroneus.atarigo</groupId>
-	<artifactId>chrogo</artifactId>
+	<artifactId>atarigo</artifactId>
 	<packaging>jar</packaging>
-
 	<name>atarigo</name>
-	<url>http://maven.apache.org</url>
-
+	<url>http://atari-go.com/</url>
+	<version>0.2</version>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -26,8 +25,7 @@
 						</manifest>
 					</archive>
 				</configuration>
-			</plugin>
-			
+			</plugin>		
 		</plugins>
 	</build>
 	<dependencies>
@@ -37,5 +35,4 @@
 			<version>4.11</version>
 		</dependency>
 	</dependencies>
-	<version>0.2</version>
 </project>
