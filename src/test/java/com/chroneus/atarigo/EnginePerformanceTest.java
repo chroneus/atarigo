@@ -31,7 +31,7 @@ import org.junit.Test;
 			for(int i=0;i<Engine.SIZE;i++){
 				for(int j=0;j<Engine.SIZE;j++){
 					board.play_move( i*Engine.SIZE+j);
-					System.out.printf("%d ",engine.pvs(board, 2,
+					System.out.printf("%d ",engine.pvs(board, 4,
 							Integer.MIN_VALUE, Integer.MAX_VALUE));
 					board.undo_move( i*Engine.SIZE+j);
 				}System.out.println();

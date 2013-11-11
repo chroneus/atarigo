@@ -89,7 +89,23 @@ public class BoardTest {
 		assertNull(moves);
 	}
 
-	
+
+	//@Test
+	public void getEye() {
+		board.loadSGFLine(";B[bc];W[bb];B[cb];W[ab];B[ca];W[ba];B[ac]");
+		BitBoard bitboard=new BitBoard();
+		bitboard.set(1);
+		bitboard=board.growGroupFromSeed(bitboard);
+		BitBoard eyes = board.getEyes(bitboard);
+		BitBoard test1=new BitBoard();
+		test1.set(0);
+		assertEquals(test1, eyes);
+		board.clear();
+		board.loadSGFLine(";B[fc];B[gd];B[ge];B[ff];B[ee];B[ed];B[df];B[eg];W[fb];W[gb];W[eb];W[dc];W[dd];W[de];W[cf];W[eh];W[fg];W[gf];W[he];W[hd];W[hc];W[dg]");
+		
+		assertEquals(board.getEyes(board.black).cardinality(),1);
+	}
+
 	@Test
 	public void containsSubBitSet() throws Exception {
 		board.play_move(false, "A3");

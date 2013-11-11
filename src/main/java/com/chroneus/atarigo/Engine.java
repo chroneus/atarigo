@@ -5,8 +5,8 @@ import java.util.*;
 public class Engine {
 	Random random = new Random();
 	int depth_minimax_ply = 4;
-	int move_to_consider_after_random = 10;
-	int max_ply = 1000;
+	int move_to_consider_after_random = 5;
+	int max_ply = 500;
 	Integer result = null;
 	public static final byte SIZE = Board.SIZE;
 	private static final boolean DEBUG = false;
@@ -50,12 +50,11 @@ public class Engine {
 		}
 		am_i_white = board.is_white_next;
 		BitBoard possible_moves = getAllPossibleMoves(board);
-		int cardinality = possible_moves.cardinality();
 		if (possible_moves == null || possible_moves.isEmpty()) {
 			this.result = -1;
 			return "resign";
 		}
-
+		int cardinality = possible_moves.cardinality();
 		if (cardinality == 1) {
 			board.play_move(possible_moves.nextSetBit(0));
 			if (board.is_terminal())
@@ -161,25 +160,7 @@ public class Engine {
     * score territory
     */
 	public int countTerritory(Board testboard) {
-		Board board = (Board) testboard.clone();
-		while (board.white.cardinality() + board.black.cardinality() < SIZE
-				* SIZE) {
-			if (board.is_white_next) {
-				BitBoard whiteaddon = board.white.nearest_stones();
-				whiteaddon.andNot(board.black);
-				board.white.or(whiteaddon);
-				BitBoard blackaddon = board.black.nearest_stones();
-				blackaddon.andNot(board.white);
-				board.black.or(blackaddon);
-			} else {
-				BitBoard blackaddon = board.black.nearest_stones();
-				blackaddon.andNot(board.white);
-				board.black.or(blackaddon);
-				BitBoard whiteaddon = board.white.nearest_stones();
-				whiteaddon.andNot(board.black);
-				board.white.or(whiteaddon);
-			}
-		}
+		Board board=testboard.fillBoardWithNearestStones();
 		int local_result = board.black.cardinality()
 				- board.white.cardinality();
 		if (testboard.is_white_next)
@@ -187,6 +168,8 @@ public class Engine {
 		return local_result;
 	}
 
+	
+	
 	/**
 	 * 
 	 * @param newboard
@@ -229,7 +212,7 @@ public class Engine {
 	public BitBoard getAllPossibleMoves(Board board) {
 		BitBoard moves = getClearCells(board);
 		
-		if (moves.cardinality() < 2 * (SIZE-1))
+		if (board.white.cardinality() < SIZE-1)
 			moves.andNot(BoardConstant.FirstLine);
         
 		
@@ -277,6 +260,9 @@ public class Engine {
 						moves.clear(i);
 				}
 			}
+			BitBoard seed=new BitBoard();
+			seed.set(i);
+			if (is_weak_group(board, seed)) moves.clear(i);
 			board.undo_move(i);
 		}
 
@@ -320,6 +306,11 @@ public class Engine {
 
 	}
     
+	boolean is_weak_group(Board test_board,BitBoard seed){
+		Board filled_board=test_board.fillBoardWithNearestStones();
+		return filled_board.growGroupFromSeed(seed).cardinality()<8;
+	}
+	
 	/**
 	 * try to capture weak stones
 	 * TODO
@@ -352,11 +343,11 @@ public class Engine {
 			int score;
 			board.play_move(i);
 			if (i != filtered[0]) {
-				score = -pvs(board, depth - 1, -α - 1, -α);// search with a null window
+				score = pvs(board, depth - 1, -α - 1, -α);// search with a null window
 				if (α < score && score < β) // if it failed high,
-					score = -pvs(board, depth - 1, -β, -α); // do a full re-search
+					score = pvs(board, depth - 1, -β, -α); // do a full re-search
 			} else
-				score = -pvs(board, depth - 1, -β, -α);
+				score = pvs(board, depth - 1, -β, -α);
 			α = Math.max(α, score);
 			board.undo_move(i);
 			if (α >= β)
