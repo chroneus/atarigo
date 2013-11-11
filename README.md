@@ -8,5 +8,5 @@ Or take build from https://s3.amazonaws.com/atarigo/atarigo-0.2.jar
 
 
 Next download gogui (http://gogui.sourceforge.net/), use Program->New Program and type java -jar atarigo-0.2.jar
-atarigo
+
 
