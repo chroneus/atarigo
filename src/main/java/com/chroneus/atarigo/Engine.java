@@ -141,6 +141,8 @@ public class Engine {
 				return Integer.MIN_VALUE;
 			if (liberties == 2 && checkLadder(board, eachGroup) != null)
 				return Integer.MIN_VALUE;
+			if(liberties == 3)
+				myliberties-=10;
 		}
 		int opponentliberties = 0;
 		BitBoard[] opponentconnected = board
