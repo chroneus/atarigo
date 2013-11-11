@@ -149,7 +149,6 @@ public class Board implements Cloneable {
 	}
 
 	public void loadSGFLine(String line) {
-
 		String moves[] = line.trim().split(";");
 		for (String move : moves) {
 			move = move.trim();
@@ -164,7 +163,30 @@ public class Board implements Cloneable {
 		}
 
 	}
-
+    
+	public Board fillBoardWithNearestStones(){
+		Board board = (Board) this.clone();
+		while (board.white.cardinality() + board.black.cardinality() < SIZE
+				* SIZE) {
+			if (board.is_white_next) {
+				BitBoard whiteaddon = board.white.nearest_stones();
+				whiteaddon.andNot(board.black);
+				board.white.or(whiteaddon);
+				BitBoard blackaddon = board.black.nearest_stones();
+				blackaddon.andNot(board.white);
+				board.black.or(blackaddon);
+			} else {
+				BitBoard blackaddon = board.black.nearest_stones();
+				blackaddon.andNot(board.white);
+				board.black.or(blackaddon);
+				BitBoard whiteaddon = board.white.nearest_stones();
+				whiteaddon.andNot(board.black);
+				board.white.or(whiteaddon);
+			}
+		}
+		return board;
+	}
+	
 	public BitBoard growGroupFromSeed(BitBoard seed) {
 		BitBoard test = (BitBoard) seed.clone();
 		test.and(white);
@@ -316,9 +338,9 @@ public class Board implements Cloneable {
 	}
 
 	public BitBoard getEyes(BitBoard test_group) {
-		BitBoard test = (BitBoard) test_group.clone();
-		test.and(white);
-		boolean am_i_white = test.cardinality() > 0;
+		BitBoard test_white = (BitBoard) test_group.clone();
+		test_white.and(white);
+		boolean am_i_white = test_white.cardinality() > 0;
 		BitBoard eyes = test_group.nearest_stones();
 		eyes.andNot(black);
 		eyes.andNot(white);
