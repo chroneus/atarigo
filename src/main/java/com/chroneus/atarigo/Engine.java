@@ -337,7 +337,7 @@ public class Engine {
 		if (DEBUG && node_processed % 1000 == 0)
 			System.out.println(node_processed);
 		BitBoard moves = getAllPossibleMoves(board);
-		if (depth == 0 || board.is_terminal() || moves.isEmpty())
+		if (depth == 0 || board.is_terminal() || moves==null ||moves.isEmpty())
 			return (am_i_white==board.is_white_next) ? countBoard(board) : -countBoard(board);
 
 		int[] filtered = filterBoardWithRandom(board, moves);
