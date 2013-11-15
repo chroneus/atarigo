@@ -38,4 +38,10 @@ import org.junit.Test;
 			}
 		
 		}
+		
+		@Test
+		public void testGenMove(){
+			System.out.println(engine.doMove(board));
+		
+		}
 }
