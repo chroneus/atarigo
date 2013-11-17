@@ -47,7 +47,7 @@ public class GTP {
 		if (line.startsWith("boardsize")) {
 			board = new Board();
 			board.clear();
-			board.SIZE = Byte.valueOf(line.split("\\s")[1]);
+			Board.SIZE = Byte.valueOf(line.split("\\s")[1]);
 			engine = new Engine();
 			return;
 		}

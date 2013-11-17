@@ -162,7 +162,7 @@ public class Engine {
     * score territory
     */
 	public int countTerritory(Board testboard) {
-		Board board=testboard.fillBoardWithNearestStones();
+		Board board=testboard.fillBoardWithNearestStones(-1);
 		int local_result = board.black.cardinality()
 				- board.white.cardinality();
 		if (testboard.is_white_next)
@@ -309,7 +309,7 @@ public class Engine {
 	}
     
 	boolean is_weak_group(Board test_board,BitBoard seed){
-		Board filled_board=test_board.fillBoardWithNearestStones();
+		Board filled_board=test_board.fillBoardWithNearestStones(-1);
 		return filled_board.growGroupFromSeed(seed).cardinality()<8;
 	}
 	

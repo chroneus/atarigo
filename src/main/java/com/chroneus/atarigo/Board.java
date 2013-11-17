@@ -90,6 +90,9 @@ public class Board implements Cloneable {
 		if (move.equalsIgnoreCase("resign")) {
 			return;
 		}
+		if (move.equalsIgnoreCase("pass")) {
+			return;
+		}
 		if (is_white) {
 			white.set(convertFromGTPMove(move));
 		}
@@ -164,10 +167,11 @@ public class Board implements Cloneable {
 
 	}
     
-	public Board fillBoardWithNearestStones(){
+	public Board fillBoardWithNearestStones(int depth){
 		Board board = (Board) this.clone();
-		while (board.white.cardinality() + board.black.cardinality() < SIZE
-				* SIZE) {
+		while (depth!=0 && 
+				board.white.cardinality() + board.black.cardinality() < SIZE * SIZE) {
+			depth--;
 			if (board.is_white_next) {
 				BitBoard whiteaddon = board.white.nearest_stones();
 				whiteaddon.andNot(board.black);
@@ -291,17 +295,16 @@ public class Board implements Cloneable {
 	 * @param move
 	 * @return
 	 */
+	@SuppressWarnings("unused")
 	private boolean isWhite(int move) {
 		return white.get(move);
 	}
 
+	@SuppressWarnings("unused")
 	private boolean isBlack(int move) {
 		return black.get(move);
 	}
 
-	private boolean isEmpty(int move) {
-		return !isBlack(move) && !isWhite(move);
-	}
 
 	@Override
 	protected Object clone() {
