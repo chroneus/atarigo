@@ -4,7 +4,7 @@ import java.util.*;
 
 public class Engine {
 	Random random = new Random();
-	int depth_minimax_ply = 4;
+	int depth_minimax_ply = 2;
 	int move_to_consider_after_random = 5;
 	int max_ply = 500;
 	Integer result = null;
@@ -337,9 +337,10 @@ public class Engine {
 		if (DEBUG && node_processed % 1000 == 0)
 			System.out.println(node_processed);
 		BitBoard moves = getAllPossibleMoves(board);
-		if (depth == 0 || board.is_terminal() || moves==null ||moves.isEmpty())
+		if (depth == 0 || board.is_terminal() || moves==null ||moves.isEmpty()){
+			if (DEBUG) System.out.println(board+ "\n"+countBoard(board));
 			return (am_i_white==board.is_white_next) ? countBoard(board) : -countBoard(board);
-
+		}
 		int[] filtered = filterBoardWithRandom(board, moves);
 		for (int i : filtered) {
 			int score;
