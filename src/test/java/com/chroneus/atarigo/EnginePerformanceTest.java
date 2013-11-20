@@ -27,7 +27,7 @@ public class EnginePerformanceTest {
 		}
 	}
 
-	@Test
+//	@Test
 	public void testPVS() {
 		board.play_move(40);
 		for (int i = 0; i < Engine.SIZE; i++) {

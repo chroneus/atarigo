@@ -8,9 +8,9 @@ public class Engine {
 	int move_to_consider_after_random = 20;
 	int max_ply = 500;
 	Integer result = null;
-	public  Board bestBoard;
+	public Board bestBoard;
 	public static final byte SIZE = Board.SIZE;
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 	boolean am_i_white = false;
 
 	public Engine() {
@@ -64,11 +64,12 @@ public class Engine {
 			board.undo_move(possible_moves.nextSetBit(0));
 			return Board.convertToGTPMove(possible_moves.nextSetBit(0));
 		}
-		int best_value = alphabeta(board,possible_moves, depth_minimax_ply, Integer.MIN_VALUE,
-				Integer.MAX_VALUE, true);
-
-		System.out.println(bestBoard);
-		System.out.println(best_value + "=" + countBoard(bestBoard));
+		int best_value = alphabeta(board, possible_moves, depth_minimax_ply,
+				Integer.MIN_VALUE, Integer.MAX_VALUE, true);
+		if (DEBUG) {
+			System.out.println(bestBoard);
+			System.out.println(best_value + "=" + countBoard(bestBoard));
+		}
 		BitBoard move;
 		if (am_i_white) {
 			move = bestBoard.white;
@@ -270,7 +271,7 @@ public class Engine {
 				moves.clear(i);
 			board.undo_move(i);
 		}
-		
+
 		return moves;
 	}
 
@@ -337,37 +338,45 @@ public class Engine {
 	/**
 	 * @see http://en.wikipedia.org/wiki/Alpha–beta_pruning
 	 */
-	int alphabeta(Board board,BitBoard moves, int depth, int α, int β,boolean maximizingPlayer){
-		if (depth == 0 || board.is_terminal() || moves==null ||moves.isEmpty()){
-			return  countBoard(board) ;
+	int alphabeta(Board board, BitBoard moves, int depth, int α, int β,
+			boolean maximizingPlayer) {
+		if (depth == 0 || board.is_terminal() || moves == null
+				|| moves.isEmpty()) {
+			return countBoard(board);
 		}
-		if(depth==depth_minimax_ply){
+		if (depth == depth_minimax_ply) {
 			moves = filterBoardWithRandom(board, moves);
 		}
-     if (maximizingPlayer){
-    	 for (int i = moves.nextSetBit(0); i >= 0; i = moves
- 				.nextSetBit(i + 1)){
-    		board.play_move(i);
-    		int score=alphabeta(board,getAllPossibleMoves(board),depth - 1, α, β, false);
-    		if(score>α){
-    			α = score;
-    			if(depth==depth_minimax_ply){
-    				bestBoard=(Board) board.clone();
-    			}
-    		}
-            board.undo_move(i);
-            if (β <= α)
-                break;// (* β cut-off *)
-    	 }return α;
-    	 }		
-    else{
-    	 for (int i = moves.nextSetBit(0); i >= 0; i = moves.nextSetBit(i + 1)) {
-    		board.play_move(i);
-            β = Math.min(β, alphabeta(board,getAllPossibleMoves(board), depth - 1, α, β, true));
-            board.undo_move(i);
-            if (β <= α)
-                break; //(* α cut-off *)
-    	}
-        return β;
-	}}
+		if (maximizingPlayer) {
+			for (int i = moves.nextSetBit(0); i >= 0; i = moves
+					.nextSetBit(i + 1)) {
+				board.play_move(i);
+				int score = alphabeta(board, getAllPossibleMoves(board),
+						depth - 1, α, β, false);
+				if (score > α) {
+					α = score;
+					if (depth == depth_minimax_ply) {
+						bestBoard = (Board) board.clone();
+					}
+				}
+				board.undo_move(i);
+				if (β <= α)
+					break;// (* β cut-off *)
+			}
+			return α;
+		} else {
+			for (int i = moves.nextSetBit(0); i >= 0; i = moves
+					.nextSetBit(i + 1)) {
+				board.play_move(i);
+				β = Math.min(
+						β,
+						alphabeta(board, getAllPossibleMoves(board), depth - 1,
+								α, β, true));
+				board.undo_move(i);
+				if (β <= α)
+					break; // (* α cut-off *)
+			}
+			return β;
+		}
+	}
 }
