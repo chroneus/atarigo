@@ -4,14 +4,14 @@ import java.util.*;
 
 public class Engine {
 	Random random = new Random();
-	int depth_minimax_ply = 2;
-	int move_to_consider_after_random = 5;
+	int depth_minimax_ply = 4;
+	int move_to_consider_after_random = 20;
 	int max_ply = 500;
 	Integer result = null;
+	public  Board bestBoard;
 	public static final byte SIZE = Board.SIZE;
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	boolean am_i_white = false;
-	static long node_processed = 0;
 
 	public Engine() {
 	}
@@ -49,6 +49,8 @@ public class Engine {
 				return "resign";
 		}
 		am_i_white = board.is_white_next;
+		if (board.black.cardinality() == 0)
+			return Board.convertToGTPMove(SIZE * SIZE / 2);
 		BitBoard possible_moves = getAllPossibleMoves(board);
 		if (possible_moves == null || possible_moves.isEmpty()) {
 			this.result = -1;
@@ -62,31 +64,32 @@ public class Engine {
 			board.undo_move(possible_moves.nextSetBit(0));
 			return Board.convertToGTPMove(possible_moves.nextSetBit(0));
 		}
-		int[] filtered_moves = filterBoardWithRandom(board, possible_moves);
-		int best_move = filtered_moves[0], best_value = -100;
-		for (int i = 0; i < filtered_moves.length; i++) {
-			board.play_move(filtered_moves[i]);
-			int test_value = pvs(board, depth_minimax_ply, Integer.MIN_VALUE,
-					Integer.MAX_VALUE);
-			if (test_value > best_value) {
-				best_move = filtered_moves[i];
-				best_value = test_value;
-			}
-			board.undo_move(filtered_moves[i]);
+		int best_value = alphabeta(board,possible_moves, depth_minimax_ply, Integer.MIN_VALUE,
+				Integer.MAX_VALUE, true);
+
+		System.out.println(bestBoard);
+		System.out.println(best_value + "=" + countBoard(bestBoard));
+		BitBoard move;
+		if (am_i_white) {
+			move = bestBoard.white;
+			move.andNot(board.white);
+		} else {
+			move = bestBoard.black;
+			move.andNot(board.black);
 		}
 		if (DEBUG)
 			System.out.println("best value " + best_value);
 		if (best_value < -30)
 			return "resign";
-		return Board.convertToGTPMove(best_move);
+		return Board.convertToGTPMove(move.nextSetBit(0));
 	}
-    
+
 	/**
-	 * subset of  @param possible_moves on @param board
-	 * which contains several (move_to_consider_after_random)best moves 
-	 * from a point of series of random game
+	 * subset of @param possible_moves on @param board which contains several
+	 * (move_to_consider_after_random)best moves from a point of series of
+	 * random game
 	 */
-	int[] filterBoardWithRandom(Board board, BitBoard possible_moves) {
+	BitBoard filterBoardWithRandom(Board board, BitBoard possible_moves) {
 		int[] filtered_moves = new int[move_to_consider_after_random];
 		int[] filtered_moves_values = new int[move_to_consider_after_random];
 		Arrays.fill(filtered_moves_values, Integer.MIN_VALUE);
@@ -105,9 +108,12 @@ public class Engine {
 					break;
 				}
 			}
-			// board.undo_move(i);
 		}
-		return filtered_moves;
+		BitBoard result = new BitBoard();
+		for (int i = 0; i < filtered_moves.length; i++) {
+			result.set(filtered_moves[i]);
+		}
+		return result;
 	}
 
 	/**
@@ -127,13 +133,12 @@ public class Engine {
 				: (black_wins - white_wins) * 100 / number_of_attempt;
 	}
 
-	
 	/**
 	 * counting function
 	 */
 	int countBoard(Board board) {
 		int myliberties = 0;
-		BitBoard[] connected = board.connectedGroup(!board.is_white_next);
+		BitBoard[] connected = board.connectedGroup(am_i_white);
 		for (BitBoard eachGroup : connected) {
 			int liberties = board.getLiberties(eachGroup).cardinality();
 			myliberties += liberties;
@@ -141,12 +146,11 @@ public class Engine {
 				return Integer.MIN_VALUE;
 			if (liberties == 2 && checkLadder(board, eachGroup) != null)
 				return Integer.MIN_VALUE;
-			if(liberties == 3)
-				myliberties-=10;
+			if (liberties == 3)
+				myliberties -= 10;
 		}
 		int opponentliberties = 0;
-		BitBoard[] opponentconnected = board
-				.connectedGroup(board.is_white_next);
+		BitBoard[] opponentconnected = board.connectedGroup(!am_i_white);
 		for (BitBoard eachGroup : opponentconnected) {
 			int liberties = board.getLiberties(eachGroup).cardinality();
 			opponentliberties += liberties;
@@ -158,20 +162,19 @@ public class Engine {
 
 		return myliberties - opponentliberties + countTerritory(board);
 	}
-   /**
-    * score territory
-    */
+
+	/**
+	 * score territory
+	 */
 	public int countTerritory(Board testboard) {
-		Board board=testboard.fillBoardWithNearestStones(-1);
+		Board board = testboard.fillBoardWithNearestStones(-1);
 		int local_result = board.black.cardinality()
 				- board.white.cardinality();
-		if (testboard.is_white_next)
+		if (am_i_white)
 			local_result = -local_result;
 		return local_result;
 	}
 
-	
-	
 	/**
 	 * 
 	 * @param newboard
@@ -181,7 +184,7 @@ public class Engine {
 		Board newboard = (Board) board.clone();
 		while (!newboard.is_terminal()) {
 			BitBoard possible_moves = getClearCells(newboard);
-			// getAllPossibleMoves(newboard); slow down a lot
+			// getAllPossibleMoves(newboard); //slow down a lot
 
 			if (possible_moves == null || possible_moves.isEmpty())
 				return !newboard.is_white_next;
@@ -207,17 +210,13 @@ public class Engine {
 
 		return moves;
 	}
-    
+
 	/**
 	 * consider self-atari and ladders
 	 */
 	public BitBoard getAllPossibleMoves(Board board) {
 		BitBoard moves = getClearCells(board);
-		
-		if (board.white.cardinality() < SIZE-1)
-			moves.andNot(BoardConstant.FirstLine);
-        
-		
+
 		// fast win check
 		BitBoard[] connected_opponent = board
 				.connectedGroup(!board.is_white_next);
@@ -248,6 +247,9 @@ public class Engine {
 				}
 			}
 		}
+
+		if (board.white.cardinality() < SIZE - 1)
+			moves.andNot(BoardConstant.FirstLine);
 		// suicide check
 		for (int i = moves.nextSetBit(0); i >= 0; i = moves.nextSetBit(i + 1)) {
 			board.play_move(i);
@@ -262,12 +264,13 @@ public class Engine {
 						moves.clear(i);
 				}
 			}
-			BitBoard seed=new BitBoard();
+			BitBoard seed = new BitBoard();
 			seed.set(i);
-			if (is_weak_group(board, seed)) moves.clear(i);
+			if (is_weak_group(board, seed))
+				moves.clear(i);
 			board.undo_move(i);
 		}
-
+		
 		return moves;
 	}
 
@@ -307,56 +310,64 @@ public class Engine {
 		return null;
 
 	}
-    
-	boolean is_weak_group(Board test_board,BitBoard seed){
-		Board filled_board=test_board.fillBoardWithNearestStones(-1);
-		return filled_board.growGroupFromSeed(seed).cardinality()<8;
+
+	boolean is_weak_group(Board test_board, BitBoard seed) {
+		Board filled_board = test_board.fillBoardWithNearestStones(-1);
+		return filled_board.growGroupFromSeed(seed).cardinality() < 8;
 	}
-	
+
 	/**
-	 * try to capture weak stones
-	 * TODO
+	 * try to capture weak stones TODO
 	 */
-	int semeai(Board board,BitBoard stone_group){
-		if(board.getEyes(stone_group).cardinality()>1) return -1;
+	int semeai(Board board, BitBoard stone_group) {
+		if (board.getEyes(stone_group).cardinality() > 1)
+			return -1;
 		BitBoard near_moves = stone_group.nearest_stones();
 		near_moves.and(getAllPossibleMoves(board));
-		for (int i = near_moves.nextSetBit(0); i >= 0; i = near_moves.nextSetBit(i + 1)) {
+		for (int i = near_moves.nextSetBit(0); i >= 0; i = near_moves
+				.nextSetBit(i + 1)) {
 			board.play_move(i);
-			if(semeai(board,stone_group)>0) return i;
+			if (semeai(board, stone_group) > 0)
+				return i;
 			board.undo_move(i);
 		}
 		return -1;
 	}
-	
-	/**
-	 * @see http://en.wikipedia.org/wiki/Negascout
-	 */
-	 int pvs(Board board, int depth, int α, int β) {
-		node_processed++;
-		if (DEBUG && node_processed % 1000 == 0)
-			System.out.println(node_processed);
-		BitBoard moves = getAllPossibleMoves(board);
-		if (depth == 0 || board.is_terminal() || moves==null ||moves.isEmpty()){
-			if (DEBUG) System.out.println(board+ "\n"+countBoard(board));
-			return (am_i_white==board.is_white_next) ? countBoard(board) : -countBoard(board);
-		}
-		int[] filtered = filterBoardWithRandom(board, moves);
-		for (int i : filtered) {
-			int score;
-			board.play_move(i);
-			if (i != filtered[0]) {
-				score = pvs(board, depth - 1, -α - 1, -α);// search with a null window
-				if (α < score && score < β) // if it failed high,
-					score = pvs(board, depth - 1, -β, -α); // do a full re-search
-			} else
-				score = pvs(board, depth - 1, -β, -α);
-			α = Math.max(α, score);
-			board.undo_move(i);
-			if (α >= β)
-				break;
 
+	/**
+	 * @see http://en.wikipedia.org/wiki/Alpha–beta_pruning
+	 */
+	int alphabeta(Board board,BitBoard moves, int depth, int α, int β,boolean maximizingPlayer){
+		if (depth == 0 || board.is_terminal() || moves==null ||moves.isEmpty()){
+			return  countBoard(board) ;
 		}
-		return α;
-	}
+		if(depth==depth_minimax_ply){
+			moves = filterBoardWithRandom(board, moves);
+		}
+     if (maximizingPlayer){
+    	 for (int i = moves.nextSetBit(0); i >= 0; i = moves
+ 				.nextSetBit(i + 1)){
+    		board.play_move(i);
+    		int score=alphabeta(board,getAllPossibleMoves(board),depth - 1, α, β, false);
+    		if(score>α){
+    			α = score;
+    			if(depth==depth_minimax_ply){
+    				bestBoard=(Board) board.clone();
+    			}
+    		}
+            board.undo_move(i);
+            if (β <= α)
+                break;// (* β cut-off *)
+    	 }return α;
+    	 }		
+    else{
+    	 for (int i = moves.nextSetBit(0); i >= 0; i = moves.nextSetBit(i + 1)) {
+    		board.play_move(i);
+            β = Math.min(β, alphabeta(board,getAllPossibleMoves(board), depth - 1, α, β, true));
+            board.undo_move(i);
+            if (β <= α)
+                break; //(* α cut-off *)
+    	}
+        return β;
+	}}
 }

@@ -15,7 +15,7 @@ public class EnginePerformanceTest {
 		engine = new Engine();
 	}
 
-	// @Test
+	 @Test
 	public void testPlayRandom() {
 		for (int i = 0; i < Engine.SIZE; i++) {
 			for (int j = 0; j < Engine.SIZE; j++) {
@@ -27,13 +27,15 @@ public class EnginePerformanceTest {
 		}
 	}
 
-	// @Test
+	@Test
 	public void testPVS() {
+		board.play_move(40);
 		for (int i = 0; i < Engine.SIZE; i++) {
 			for (int j = 0; j < Engine.SIZE; j++) {
 				board.play_move(i * Engine.SIZE + j);
-				System.out.printf("%3d", engine.pvs(board, 4,
-						Integer.MIN_VALUE, Integer.MAX_VALUE));
+				System.out.printf("%3d", engine.alphabeta(board, 
+						engine.getAllPossibleMoves(board),4,
+						Integer.MIN_VALUE, Integer.MAX_VALUE,true));
 				board.undo_move(i * Engine.SIZE + j);
 			}
 			System.out.println();

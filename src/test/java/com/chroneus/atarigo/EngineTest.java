@@ -44,8 +44,8 @@ public class EngineTest {
 " · · W · · · · · ·\r\n" + 
 " · · W · · · · · ·\r\n" + 
 "");
-		int[]random= engine.filterBoardWithRandom(board, engine.getAllPossibleMoves(board));
-			System.out.println(new BitBoard(random));
+		System.out.println(engine.filterBoardWithRandom(board, engine.getAllPossibleMoves(board)));
+		
 
 	}
 
