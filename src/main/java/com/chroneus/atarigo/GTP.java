@@ -82,7 +82,13 @@ public class GTP {
 			engine = new Engine();
 			return;
 		}
-
+		if (line.startsWith("showboard")) {
+			out.append("\n");
+			out.append(board);
+			if (board.is_white_next) out.append("White to play\n");
+			else out.append("Black to play\n");
+			return;
+		}
 		if (line.equals("quit"))
 			System.exit(0);
 	}
