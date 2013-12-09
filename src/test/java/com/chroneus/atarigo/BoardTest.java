@@ -85,7 +85,7 @@ public class BoardTest {
 	@Test
 	public void getPossibleMoves() {
 		board.loadSGFLine(";B[cc];W[cd];B[dc];W[dd];B[ed];W[ec];B[fc];W[eb];B[fd];W[ef];B[fb];W[hf];B[ff];W[fg];B[gg];W[gf];B[fe];W[hg];B[fh];W[eg];B[gh];W[hh];B[be];W[eh];B[af];W[gi]))");
-		BitBoard moves = engine.getAllPossibleMoves(board);
+		BitBoard moves = engine.getAllConsidearableMoves(board);
 		assertNull(moves);
 	}
 

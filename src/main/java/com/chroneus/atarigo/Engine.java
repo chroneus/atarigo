@@ -9,11 +9,11 @@ public class Engine  {
 	Random random = new Random();
 	int depth_minimax_ply = 4;
 	int move_to_consider_after_random = 20;
-	static int number_of_tests=1000;
+	static int random_game_to_check=1000;
 	Integer result = null;
-	public Board bestBoard;
+	int[] counting=new int[SIZE*SIZE];
+	public Board best_board;
 	public static final byte SIZE = Board.SIZE;
-	 int[] counting=new int[SIZE*SIZE];
 	private static final boolean DEBUG = false;
 	boolean am_i_white = false;
 
@@ -57,7 +57,7 @@ public class Engine  {
 		am_i_white = board.is_white_next;
 		if (board.black.cardinality() == 0)
 			return Board.convertToGTPMove(SIZE * SIZE / 2);
-		BitBoard possible_moves = getAllPossibleMoves(board);
+		BitBoard possible_moves = getAllConsidearableMoves(board);
 		if (possible_moves == null || possible_moves.isEmpty()) {
 			this.result = -1;
 			return "resign";
@@ -73,15 +73,15 @@ public class Engine  {
 		int best_value = alphabeta(board, possible_moves, depth_minimax_ply,
 				Integer.MIN_VALUE, Integer.MAX_VALUE, true);
 		if (DEBUG) {
-			System.out.println(bestBoard);
-			System.out.println(best_value + "=" + countBoard(bestBoard));
+			System.out.println(best_board);
+			System.out.println(best_value + "=" + countBoard(best_board));
 		}
 		BitBoard move;
 		if (am_i_white) {
-			move = bestBoard.white;
+			move = best_board.white;
 			move.andNot(board.white);
 		} else {
-			move = bestBoard.black;
+			move = best_board.black;
 			move.andNot(board.black);
 		}
 		if (DEBUG)
@@ -137,14 +137,14 @@ public class Engine  {
 		Board newboard = (Board) board.clone();
 		newboard.play_move(move);
 		int white_wins = 0, black_wins = 0;
-		for (int i = 0; i < number_of_tests; i++) {
+		for (int i = 0; i < random_game_to_check; i++) {
 			if (playRandomGame(newboard))
 				white_wins++;
 			else
 				black_wins++;
 		}
-		if (am_i_white) counting[move]= (white_wins - black_wins) * 100 / number_of_tests;
-		else counting[move]= (black_wins - white_wins) * 100 / number_of_tests;
+		if (am_i_white) counting[move]= (white_wins - black_wins) * 100 / random_game_to_check;
+		else counting[move]= (black_wins - white_wins) * 100 / random_game_to_check;
 	}
 
 	/**
@@ -224,11 +224,10 @@ public class Engine  {
 
 		return moves;
 	}
-
 	/**
 	 * consider self-atari and ladders
 	 */
-	public BitBoard getAllPossibleMoves(Board board) {
+	public BitBoard getAllConsidearableMoves(Board board) {
 		BitBoard moves = getClearCells(board);
 
 		// fast win check
@@ -337,7 +336,7 @@ public class Engine  {
 		if (board.getEyes(stone_group).cardinality() > 1)
 			return -1;
 		BitBoard near_moves = stone_group.nearest_stones();
-		near_moves.and(getAllPossibleMoves(board));
+		near_moves.and(getAllConsidearableMoves(board));
 		for (int i = near_moves.nextSetBit(0); i >= 0; i = near_moves
 				.nextSetBit(i + 1)) {
 			board.play_move(i);
@@ -364,12 +363,12 @@ public class Engine  {
 			for (int i = moves.nextSetBit(0); i >= 0; i = moves
 					.nextSetBit(i + 1)) {
 				board.play_move(i);
-				int score = alphabeta(board, getAllPossibleMoves(board),
+				int score = alphabeta(board, getAllConsidearableMoves(board),
 						depth - 1, α, β, false);
 				if (score > α) {
 					α = score;
 					if (depth == depth_minimax_ply) {
-						bestBoard = (Board) board.clone();
+						best_board = (Board) board.clone();
 					}
 				}
 				board.undo_move(i);
@@ -383,7 +382,7 @@ public class Engine  {
 				board.play_move(i);
 				β = Math.min(
 						β,
-						alphabeta(board, getAllPossibleMoves(board), depth - 1,
+						alphabeta(board, getAllConsidearableMoves(board), depth - 1,
 								α, β, true));
 				board.undo_move(i);
 				if (β <= α)

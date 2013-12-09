@@ -42,7 +42,7 @@ public class EnginePerformanceTest {
 			e.printStackTrace();
 		}
 		for (int i = 0; i < engine.counting.length; i++) {
-			if(i%engine.SIZE==0)System.out.println();
+			if(i%Engine.SIZE==0)System.out.println();
 			System.out.print(" "+engine.counting[i]);
 		}
 	}
@@ -53,7 +53,7 @@ public class EnginePerformanceTest {
 		for (int i = 0; i < Engine.SIZE; i++) {
 			for (int j = 0; j < Engine.SIZE; j++) {
 				board.play_move(i * Engine.SIZE + j);
-				System.out.printf("%3d", engine.alphabeta(board, engine.getAllPossibleMoves(board), 4,
+				System.out.printf("%3d", engine.alphabeta(board, engine.getAllConsidearableMoves(board), 4,
 						Integer.MIN_VALUE, Integer.MAX_VALUE, true));
 				board.undo_move(i * Engine.SIZE + j);
 			}
