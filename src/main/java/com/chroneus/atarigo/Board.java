@@ -424,4 +424,8 @@ public class Board implements Cloneable {
 
 	}
 
+	public boolean isClear(byte i, byte j) {
+		return !black.get(i, j)&&!white.get(i, j);
+	}
+
 }

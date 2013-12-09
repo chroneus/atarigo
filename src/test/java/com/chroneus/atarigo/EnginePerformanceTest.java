@@ -1,8 +1,8 @@
 package com.chroneus.atarigo;
 
+import java.util.concurrent.*;
+import org.junit.*;
 
-import org.junit.Before;
-import org.junit.Test;
 
 public class EnginePerformanceTest {
 	Board board;
@@ -15,27 +15,46 @@ public class EnginePerformanceTest {
 		engine = new Engine();
 	}
 
-	 @Test
+	@Test
 	public void testPlayRandom() {
-		for (int i = 0; i < Engine.SIZE; i++) {
-			for (int j = 0; j < Engine.SIZE; j++) {
-				double testfrombegin = engine.testBoardOnRandomPlay(board, i
-						* Engine.SIZE + j, 1000);
-				System.out.printf("%.2f ", testfrombegin);
+		ExecutorService executor = Executors.newCachedThreadPool();
+		board=new Board(
+						" · · · B · · · · ·\r\n" + 
+						" · · W · B · · · ·\r\n" + 
+						" · · W · · · B · ·\r\n" + 
+						" · · W · B · · · ·\r\n" + 
+						" · W · B · · · · ·\r\n" + 
+						" · · W · B · · · ·\r\n" + 
+						" · · W · B · B · ·\r\n" + 
+						" · · W · · · · · ·\r\n" + 
+						" · · W · · · · · ·\r\n" + 
+						"");
+		for (byte i = 0; i < Engine.SIZE; i++) {
+			for (byte j = 0; j < Engine.SIZE; j++) {
+                 if(board.isClear(i,j))
+				executor.execute( new EngineThread(board, i * Engine.SIZE + j, engine, "testBoardOnRandomPlay"));
 			}
-			System.out.println();
+		}
+		executor.shutdown();
+		try {
+			executor.awaitTermination(10, TimeUnit.MINUTES);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		for (int i = 0; i < engine.counting.length; i++) {
+			if(i%engine.SIZE==0)System.out.println();
+			System.out.print(" "+engine.counting[i]);
 		}
 	}
 
-//	@Test
+	// @Test
 	public void testPVS() {
 		board.play_move(40);
 		for (int i = 0; i < Engine.SIZE; i++) {
 			for (int j = 0; j < Engine.SIZE; j++) {
 				board.play_move(i * Engine.SIZE + j);
-				System.out.printf("%3d", engine.alphabeta(board, 
-						engine.getAllPossibleMoves(board),4,
-						Integer.MIN_VALUE, Integer.MAX_VALUE,true));
+				System.out.printf("%3d", engine.alphabeta(board, engine.getAllPossibleMoves(board), 4,
+						Integer.MIN_VALUE, Integer.MAX_VALUE, true));
 				board.undo_move(i * Engine.SIZE + j);
 			}
 			System.out.println();
@@ -46,14 +65,15 @@ public class EnginePerformanceTest {
 	@Test
 	public void testCount() {
 		board.play_move(40);
-        for (int i = 0; i < Engine.SIZE; i++) {
+		for (int i = 0; i < Engine.SIZE; i++) {
 			for (int j = 0; j < Engine.SIZE; j++) {
 				int move = i * Engine.SIZE + j;
 				if (move != 40) {
 					board.play_move(move);
-					System.out.printf("%4d", engine.countBoard(board));					
+					System.out.printf("%4d", engine.countBoard(board));
 					board.undo_move(move);
-				} else {
+				}
+				else {
 					System.out.print(" * ");
 				}
 			}
@@ -61,9 +81,22 @@ public class EnginePerformanceTest {
 		}
 	}
 
+	// @Test  // for demo game uncomment me
+	public void testPlay() {
+		long begin = System.currentTimeMillis();
+		String move = "";
+		int i = 0;
+		while (move.length() < 3) {
+			move = engine.doMove(board);
+			board.play_move(move);
+			System.out.println(board);
+			System.out.println("elapsed " + (System.currentTimeMillis() - begin) / 1000 + " sec for " + i++ + " turns");
+		}
+	}
+
 	@Test
 	public void testGenMove() {
-		//board.play_move(40);
+		// board.play_move(40);
 		System.out.println(engine.doMove(board));
 
 	}

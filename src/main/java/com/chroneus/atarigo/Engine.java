@@ -1,17 +1,23 @@
 package com.chroneus.atarigo;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
-public class Engine {
+public class Engine  {
 	Random random = new Random();
 	int depth_minimax_ply = 4;
 	int move_to_consider_after_random = 20;
-	int max_ply = 500;
+	static int number_of_tests=1000;
 	Integer result = null;
 	public Board bestBoard;
 	public static final byte SIZE = Board.SIZE;
+	 int[] counting=new int[SIZE*SIZE];
 	private static final boolean DEBUG = false;
 	boolean am_i_white = false;
+
+
 
 	public Engine() {
 	}
@@ -91,28 +97,34 @@ public class Engine {
 	 * random game
 	 */
 	BitBoard filterBoardWithRandom(Board board, BitBoard possible_moves) {
-		int[] filtered_moves = new int[move_to_consider_after_random];
-		int[] filtered_moves_values = new int[move_to_consider_after_random];
-		Arrays.fill(filtered_moves_values, Integer.MIN_VALUE);
-		int random_to_test = max_ply / (possible_moves.cardinality() + 10);
+		
+		ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 		for (int i = possible_moves.nextSetBit(0); i >= 0; i = possible_moves
 				.nextSetBit(i + 1)) {
-			int current_weight = testBoardOnRandomPlay(board, i, random_to_test);
-			for (int j = 0; j < filtered_moves_values.length; j++) {
-				if (current_weight > filtered_moves_values[j]) {
-					for (int shift = move_to_consider_after_random - 1; shift > j; shift--) {
-						filtered_moves[shift] = filtered_moves[shift - 1];
-						filtered_moves_values[shift] = filtered_moves_values[shift - 1];
-					}
-					filtered_moves_values[j] = current_weight;
-					filtered_moves[j] = i;
-					break;
+			Runnable worker = new EngineThread(board, i, this, "testBoardOnRandomPlay");
+			executor.submit(worker);
+		}
+		executor.shutdown();
+		try {
+			executor.awaitTermination(30, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		int[]best_moves=new int[move_to_consider_after_random];
+		Arrays.fill(best_moves, Integer.MIN_VALUE);
+		for (int i = 0; i < counting.length; i++) {
+			for (int j = 0; j < best_moves.length; j++) {  //bubble sort :))
+				if(counting[i]>=best_moves[j]){
+					if(j>0) {
+						best_moves[j-1]=best_moves[j];
+						best_moves[j]=counting[i];
+					}else best_moves[0]=counting[i];
 				}
 			}
 		}
 		BitBoard result = new BitBoard();
-		for (int i = 0; i < filtered_moves.length; i++) {
-			result.set(filtered_moves[i]);
+		for(int moves:best_moves){
+			result.set(moves);
 		}
 		return result;
 	}
@@ -120,18 +132,19 @@ public class Engine {
 	/**
 	 * returns normalized white score (-100..+100)
 	 */
-	int testBoardOnRandomPlay(Board board, int move, int number_of_attempt) {
+	void testBoardOnRandomPlay(Board board, int move) {
+
 		Board newboard = (Board) board.clone();
 		newboard.play_move(move);
 		int white_wins = 0, black_wins = 0;
-		for (int i = 0; i < number_of_attempt; i++) {
+		for (int i = 0; i < number_of_tests; i++) {
 			if (playRandomGame(newboard))
 				white_wins++;
 			else
 				black_wins++;
 		}
-		return am_i_white ? (white_wins - black_wins) * 100 / number_of_attempt
-				: (black_wins - white_wins) * 100 / number_of_attempt;
+		if (am_i_white) counting[move]= (white_wins - black_wins) * 100 / number_of_tests;
+		else counting[move]= (black_wins - white_wins) * 100 / number_of_tests;
 	}
 
 	/**
@@ -178,7 +191,7 @@ public class Engine {
 
 	/**
 	 * 
-	 * @param newboard
+	 * @param board
 	 * @return if white wins
 	 */
 	public Boolean playRandomGame(Board board) {
@@ -345,7 +358,7 @@ public class Engine {
 			return countBoard(board);
 		}
 		if (depth == depth_minimax_ply) {
-			moves = filterBoardWithRandom(board, moves);
+		//	moves = filterBoardWithRandom(board, moves);
 		}
 		if (maximizingPlayer) {
 			for (int i = moves.nextSetBit(0); i >= 0; i = moves
@@ -379,4 +392,5 @@ public class Engine {
 			return β;
 		}
 	}
+
 }
