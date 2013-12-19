@@ -268,6 +268,7 @@ public class Board implements Cloneable {
 
 	/**
 	 * get @param element and it's connected from @param all to @param group
+	 * TODO improveme with nearest_stone call
 	 */
 	private void addElementToGroup(BitBoard group, BitBoard all, int element) {
 		group.set(element);
