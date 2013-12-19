@@ -44,7 +44,7 @@ public class EngineTest {
 " · · W · · · · · ·\r\n" + 
 " · · W · · · · · ·\r\n" + 
 "");
-		System.out.println(engine.filterBoardWithRandom(board, engine.getAllConsidearableMoves(board)));
+		System.out.println(engine.filterBoardWithRandom(board, engine.getAllConsidearableMoves(board),10));
 		
 
 	}

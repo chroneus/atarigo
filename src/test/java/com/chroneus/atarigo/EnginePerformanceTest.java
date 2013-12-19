@@ -15,37 +15,7 @@ public class EnginePerformanceTest {
 		engine = new Engine();
 	}
 
-	@Test
-	public void testPlayRandom() {
-		ExecutorService executor = Executors.newCachedThreadPool();
-		board=new Board(
-						" · · · B · · · · ·\r\n" + 
-						" · · W · B · · · ·\r\n" + 
-						" · · W · · · B · ·\r\n" + 
-						" · · W · B · · · ·\r\n" + 
-						" · W · B · · · · ·\r\n" + 
-						" · · W · B · · · ·\r\n" + 
-						" · · W · B · B · ·\r\n" + 
-						" · · W · · · · · ·\r\n" + 
-						" · · W · · · · · ·\r\n" + 
-						"");
-		for (byte i = 0; i < Engine.SIZE; i++) {
-			for (byte j = 0; j < Engine.SIZE; j++) {
-                 if(board.isClear(i,j))
-				executor.execute( new EngineThread(board, i * Engine.SIZE + j, engine, "testBoardOnRandomPlay"));
-			}
-		}
-		executor.shutdown();
-		try {
-			executor.awaitTermination(10, TimeUnit.MINUTES);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		for (int i = 0; i < engine.counting.length; i++) {
-			if(i%Engine.SIZE==0)System.out.println();
-			System.out.print(" "+engine.counting[i]);
-		}
-	}
+
 
 	// @Test
 	public void testPVS() {
