@@ -7,7 +7,7 @@ import java.util.*;
 public class Board implements Cloneable {
 	BitBoard black = new BitBoard();
 	BitBoard white = new BitBoard();
-
+    
 	public boolean is_white_next = false;
 
 	public static byte SIZE = 9;
@@ -240,29 +240,47 @@ public class Board implements Cloneable {
 	public BitBoard[] connectedGroup(boolean is_white) {
 
 		if (is_white) {
-			return connectedGroup(this.white);
+			return connectedGroup(this.white,this.black);
 		}
 		else {
-			return connectedGroup(this.black);
+			return connectedGroup(this.black,this.white);
 		}
 
 	}
 
 	/**
-	 * list of connected groups divided from existing stones
+	 * list of connected groups splitted from existing stones
 	 */
-	public BitBoard[] connectedGroup(BitBoard stones) {
+	public BitBoard[] connectedGroup(BitBoard stones,BitBoard opponent_stones) {
 		
-		BitBoard stoneslocal = (BitBoard) stones.clone();
-		stoneslocal.diagonal_nearest_stones();
+		BitBoard stones_to_split = (BitBoard) stones.clone();
+		
+		BitBoard horizontalnear=stones_to_split.get_right_nearest_stones();
+		horizontalnear.and(stones_to_split);
+		horizontalnear.or(horizontalnear.get_left_nearest_stones());
+		BitBoard horizontal_bamboo=horizontalnear.get_bottom_nearest_stones();
+		horizontal_bamboo.andNot(opponent_stones);
+		horizontal_bamboo.andNot(opponent_stones.get_right_nearest_stones());
+		horizontal_bamboo.and(horizontalnear);
+		
+		
+		BitBoard verticalnear=stones_to_split.get_bottom_nearest_stones();
+		verticalnear.and(stones_to_split);
+		verticalnear.or(verticalnear.get_top_nearest_stones());
+		BitBoard vertical_bamboo=verticalnear.get_right_nearest_stones();
+		vertical_bamboo.andNot(opponent_stones);
+		vertical_bamboo.andNot(opponent_stones.get_bottom_nearest_stones());
+		vertical_bamboo.and(verticalnear);
+		
 		ArrayList<BitBoard> groups = new ArrayList<BitBoard>();
-		int element;
-		while (!stoneslocal.isEmpty()) {
-			element = stoneslocal.nextSetBit(0);
-			BitBoard group = new BitBoard(SIZE * SIZE);
-			addElementToGroup(group, stoneslocal, element);
-			groups.add(group);
-		}
+		
+//		int element;
+//		while (!stones_to_split.isEmpty()) {
+//			element = stones_to_split.nextSetBit(0);
+//			BitBoard group = new BitBoard(SIZE * SIZE);
+//			addElementToGroup(group, stones_to_split, element);
+//			groups.add(group);
+//		}
 		BitBoard[] result = new BitBoard[groups.size()];
 		result = groups.toArray(result);
 		return result;

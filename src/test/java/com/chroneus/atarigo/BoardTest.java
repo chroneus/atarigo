@@ -69,6 +69,19 @@ public class BoardTest {
 				" · · · · · · · · ·");
 		assertEquals(board.connectedGroup(false).length, 3);
 		assertEquals(board.connectedGroup(true).length, 4);
+		
+		 board=new Board(
+				" · · · B · · · · ·\r\n" + 
+				" · W B · · B · · ·\r\n" + 
+				" · · W B · B · · ·\r\n" + 
+				" · W W · B · · · ·\r\n" + 
+				" · · · · · B B · ·\r\n" + 
+				" · W W · · · · · ·\r\n" + 
+				" · · · W · B B · ·\r\n" + 
+				" · W W · · · · · ·\r\n" + 
+				" · · · · · · · · ·");
+		assertEquals(board.connectedGroup(false).length, 1);
+		assertEquals(board.connectedGroup(true).length, 1);
 	}
   
 
