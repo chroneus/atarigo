@@ -63,8 +63,7 @@ public class Engine {
 			return Board.convertToGTPMove(possible_moves.nextSetBit(0));
 		}
 	//	possible_moves = filterBoardWithRandom(board, possible_moves,1+possible_moves.cardinality()/4);
-		possible_moves=filterWeakMoves(board,possible_moves);
-		int best_value = alphabeta(board, possible_moves, depth_minimax_ply, Integer.MIN_VALUE, Integer.MAX_VALUE, true);
+		int best_value = alphabeta(board, possible_moves, depth_minimax_ply, -50, 50, true);
 		if (DEBUG) {
 			System.out.println(best_board);
 			System.out.println(best_value + "=" + countBoard(best_board));
@@ -83,10 +82,6 @@ public class Engine {
 		return Board.convertToGTPMove(move.nextSetBit(0));
 	}
 
-	private BitBoard filterWeakMoves(Board board, BitBoard possible_moves) {
-		
-		return null;
-	}
 
 	/**
 	 * subset of @param possible_moves on @param board which contains several

@@ -66,6 +66,24 @@ public class EngineTest {
 	assertNotNull(engine.getAllConsidearableMoves(board));
 	}
 	
+
+	//@Test
+	public void testWeakGroup() {
+		board=new Board(
+				" · · · · W · · B ·\r\n" + 
+				" · · W · W · W B ·\r\n" + 
+				" · B W · B · W B ·\r\n" + 
+				" · B W · B · W B ·\r\n" + 
+				" · B W · B · W W W\r\n" + 
+				" · B W W · · · · ·\r\n" + 
+				" · B W B · B B B B\r\n" + 
+				" · · W B · W W W ·\r\n" + 
+				" · · · B · · · · ·");
+		board.play_move(engine.doMove(board));
+   System.out.println(board);
+	}
+	
+	
 	
 	@Test
 	public void testLadder() {

@@ -252,7 +252,9 @@ public class Board implements Cloneable {
 	 * list of connected groups divided from existing stones
 	 */
 	public BitBoard[] connectedGroup(BitBoard stones) {
+		
 		BitBoard stoneslocal = (BitBoard) stones.clone();
+		stoneslocal.diagonal_nearest_stones();
 		ArrayList<BitBoard> groups = new ArrayList<BitBoard>();
 		int element;
 		while (!stoneslocal.isEmpty()) {
