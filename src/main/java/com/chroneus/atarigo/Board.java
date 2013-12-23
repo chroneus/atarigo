@@ -5,6 +5,8 @@ import java.util.*;
 
 
 public class Board implements Cloneable {
+	static final boolean BLACK=false;
+	static final boolean WHITE=true;
 	BitBoard black = new BitBoard();
 	BitBoard white = new BitBoard();
 
@@ -265,7 +267,30 @@ public class Board implements Cloneable {
 		result = groups.toArray(result);
 		return result;
 	}
-
+    
+	/**
+	 * list of connected groups divided from existing stones
+	 */
+	public BitBoard[] connectedGroupAddElement(BitBoard existing,BitBoard[]result_for_existing,BitBoard new_one) {
+		BitBoard diff=(BitBoard) new_one.clone();		diff.andNot(existing);
+		if(diff.isEmpty()) return result_for_existing;
+		List<BitBoard> resultList=new ArrayList<BitBoard>(Arrays.asList(result_for_existing));
+		for(int cell=diff.nextSetBit(0);cell!=-1;cell=diff.nextSetBit(cell+1)){
+			BitBoard extra=new BitBoard();
+			extra.set(cell);
+			for(BitBoard board:result_for_existing){
+				if(board.nearest_stones().get(cell)){
+					extra.or(board);
+					resultList.remove(board);
+				}
+			resultList.add(extra);	
+			}
+		}
+		BitBoard[] result = new BitBoard[resultList.size()];
+		result = resultList.toArray(result);
+		return result;
+	}
+	
 	/**
 	 * get @param element and it's connected from @param all to @param group
 	 * TODO improveme with nearest_stone call

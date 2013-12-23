@@ -11,13 +11,15 @@ public class Engine {
 	int move_to_consider_after_random = 20;
 	static int random_game_to_check = 100;
 	Integer result = null;
-	public Board best_board;
+	public Board best_board, current_board;
 	public static final byte SIZE = Board.SIZE;
 	private static final boolean DEBUG = false;
 	boolean am_i_white = false;
-	public BitBoard[] white_connected,black_connected;
-    public WeakConnection[] white,black;
+	public BitBoard[] white_connected, black_connected;
+
 	public Engine() {
+		white_connected = new BitBoard[0];
+		black_connected = new BitBoard[0];
 	}
 
 	/**
@@ -43,15 +45,20 @@ public class Engine {
 	 * moves as good shape, good line, max territory
 	 */
 	public String doMove(Board board) {
+		this.current_board = (Board) board.clone();
+		this.white_connected = board.connectedGroup(Board.WHITE);
+		this.black_connected = board.connectedGroup(Board.BLACK);
+		this.am_i_white = board.is_white_next;
 		if (this.result != null) {
 			if (this.result == 1)
 				return "pass";
 			else
 				return "resign";
 		}
-		am_i_white = board.is_white_next;
 		if (board.black.cardinality() == 0) return Board.convertToGTPMove(SIZE * SIZE / 2);
-		BitBoard possible_moves = getAllConsidearableMoves(board);
+		if (board.white.cardinality() == 0)
+			return Board.convertToGTPMove(firstMoveDictionary(board.black.nextSetBit(0)));
+		BitBoard possible_moves = getAllMoves(board);
 		if (possible_moves == null || possible_moves.isEmpty()) {
 			this.result = -1;
 			return "resign";
@@ -63,8 +70,9 @@ public class Engine {
 			board.undo_move(possible_moves.nextSetBit(0));
 			return Board.convertToGTPMove(possible_moves.nextSetBit(0));
 		}
-	//	possible_moves = filterBoardWithRandom(board, possible_moves,1+possible_moves.cardinality()/4);
-	//	possible_moves=filterWeakMoves(board,possible_moves);
+		// possible_moves = filterBoardWithRandom(board,
+		// possible_moves,1+possible_moves.cardinality()/4);
+		// possible_moves=filterWeakMoves(board,possible_moves);
 		int best_value = alphabeta(board, possible_moves, depth_minimax_ply, Integer.MIN_VALUE, Integer.MAX_VALUE, true);
 		if (DEBUG) {
 			System.out.println(best_board);
@@ -84,9 +92,29 @@ public class Engine {
 		return Board.convertToGTPMove(move.nextSetBit(0));
 	}
 
-	private BitBoard filterWeakMoves(Board board, BitBoard possible_moves) {
-		
-		return null;
+	private int firstMoveDictionary(int nextSetBit) {
+		if (nextSetBit == SIZE * SIZE / 2) return SIZE * SIZE / 4;
+		BitBoard position = new BitBoard();
+		position.set(nextSetBit);
+		position.and(BoardConstant.FirstLine);
+		if (!position.isEmpty()) {
+			BitBoard move = position.nearest_stones();
+			move.and(BoardConstant.SecondLine);
+			return move.nextSetBit(0);
+		}
+		position = new BitBoard();
+		position.set(nextSetBit);
+		position.and(BoardConstant.SecondLine);
+		if (!position.isEmpty()) {
+			position = position.nearest_stones();
+			position.and(BoardConstant.ThirdLine);
+			return position.nextSetBit(0);
+		}
+		position = new BitBoard();
+		position.set(nextSetBit);
+		position = position.rotate90().rotate90();
+		position.and(BoardConstant.ThirdLine);
+		return position.nextSetBit(0);
 	}
 
 	/**
@@ -94,42 +122,42 @@ public class Engine {
 	 * (move_to_consider_after_random)best moves from a point of series of
 	 * random game
 	 */
-	BitBoard filterBoardWithRandom(Board board, BitBoard possible_moves,int moves_to_consider) {
-		try{
-		List <Callable<Integer[]>> tasks= new ArrayList<Callable<Integer[]>>();
-		for (int i = possible_moves.nextSetBit(0); i >= 0; i = possible_moves.nextSetBit(i + 1)) {
-			tasks.add(new RandomGameCallable(board, i, this));
-		}
-		int[] best_moves = new int[moves_to_consider];
-		int[] best_moves_positions = new int[moves_to_consider];
-		Arrays.fill(best_moves, Integer.MIN_VALUE);
-		List<Future<Integer[]>> futures=executor.invokeAll(tasks);
-		 for (Iterator<Future<Integer[]>> iterator = futures.iterator(); iterator.hasNext();) {
-			Future<Integer[]> future =  iterator.next();	
-			for (int j = 0; j < best_moves.length; j++) { // bubble sort :))
-				if(future.isDone()){
-					int move=future.get()[0];
-					int score=future.get()[1];
-				if (score >= best_moves[j]) {
-					if (j > 0) {
-						best_moves_positions[j-1]=best_moves_positions[j];
-						best_moves_positions[j]=move;
-						best_moves[j - 1] = best_moves[j];
-						best_moves[j] = score;
+	BitBoard filterBoardWithRandom(Board board, BitBoard possible_moves, int moves_to_consider) {
+		try {
+			List<Callable<Integer[]>> tasks = new ArrayList<Callable<Integer[]>>();
+			for (int i = possible_moves.nextSetBit(0); i >= 0; i = possible_moves.nextSetBit(i + 1)) {
+				tasks.add(new RandomGameCallable(board, i, this));
+			}
+			int[] best_moves = new int[moves_to_consider];
+			int[] best_moves_positions = new int[moves_to_consider];
+			Arrays.fill(best_moves, Integer.MIN_VALUE);
+			List<Future<Integer[]>> futures = executor.invokeAll(tasks);
+			for (Iterator<Future<Integer[]>> iterator = futures.iterator(); iterator.hasNext();) {
+				Future<Integer[]> future = iterator.next();
+				for (int j = 0; j < best_moves.length; j++) { // bubble sort :))
+					if (future.isDone()) {
+						int move = future.get()[0];
+						int score = future.get()[1];
+						if (score >= best_moves[j]) {
+							if (j > 0) {
+								best_moves_positions[j - 1] = best_moves_positions[j];
+								best_moves_positions[j] = move;
+								best_moves[j - 1] = best_moves[j];
+								best_moves[j] = score;
+							}
+							else
+								best_moves[0] = score;
+							best_moves_positions[0] = move;
+						}
 					}
-					else
-						best_moves[0] = score;
-						best_moves_positions[0]=move;
-				}
 				}
 			}
-		}
-		 BitBoard result = new BitBoard();
-		 for (int i = 0; i < best_moves_positions.length; i++) {
-			result.set(best_moves_positions[i]);
-		}
-		return result;
-		}catch(Exception  e){
+			BitBoard result = new BitBoard();
+			for (int i = 0; i < best_moves_positions.length; i++) {
+				result.set(best_moves_positions[i]);
+			}
+			return result;
+		} catch (Exception e) {
 			e.printStackTrace();
 			return possible_moves;
 		}
@@ -157,9 +185,22 @@ public class Engine {
 	/**
 	 * counting function
 	 */
-	int countBoard(Board board) {
+	private int countBoard(Board board) {
 		int myliberties = 0;
-		BitBoard[] connected = board.connectedGroup(am_i_white);
+		BitBoard[] connected, opponentconnected;
+		// connected = board.connectedGroup(am_i_white);
+		// opponentconnected= board.connectedGroup(!am_i_white);
+		if (am_i_white) {
+			connected = board.connectedGroupAddElement(this.current_board.white, this.white_connected, board.white);
+			opponentconnected = board.connectedGroupAddElement(this.current_board.black, this.black_connected,
+					board.black);
+		}
+		else {
+			opponentconnected = board.connectedGroupAddElement(this.current_board.white, this.white_connected,
+					board.white);
+			connected = // board.connectedGroup(!am_i_white);
+			board.connectedGroupAddElement(this.current_board.black, this.black_connected, board.black);
+		}
 		for (BitBoard eachGroup : connected) {
 			int liberties = board.getLiberties(eachGroup).cardinality();
 			myliberties += liberties;
@@ -168,7 +209,7 @@ public class Engine {
 			if (liberties == 3) myliberties -= 10;
 		}
 		int opponentliberties = 0;
-		BitBoard[] opponentconnected = board.connectedGroup(!am_i_white);
+
 		for (BitBoard eachGroup : opponentconnected) {
 			int liberties = board.getLiberties(eachGroup).cardinality();
 			opponentliberties += liberties;
@@ -226,7 +267,7 @@ public class Engine {
 	/**
 	 * consider self-atari and ladders
 	 */
-	public BitBoard getAllConsidearableMoves(Board board) {
+	public BitBoard getAllMoves(Board board) {
 		BitBoard moves = getClearCells(board);
 
 		// fast win check
@@ -323,7 +364,7 @@ public class Engine {
 	int semeai(Board board, BitBoard stone_group) {
 		if (board.getEyes(stone_group).cardinality() > 1) return -1;
 		BitBoard near_moves = stone_group.nearest_stones();
-		near_moves.and(getAllConsidearableMoves(board));
+		near_moves.and(getAllMoves(board));
 		for (int i = near_moves.nextSetBit(0); i >= 0; i = near_moves.nextSetBit(i + 1)) {
 			board.play_move(i);
 			if (semeai(board, stone_group) > 0) return i;
@@ -342,7 +383,7 @@ public class Engine {
 		if (maximizingPlayer) {
 			for (int i = moves.nextSetBit(0); i >= 0; i = moves.nextSetBit(i + 1)) {
 				board.play_move(i);
-				int score = alphabeta(board, getAllConsidearableMoves(board), depth - 1, α, β, false);
+				int score = alphabeta(board, getAllMoves(board), depth - 1, α, β, false);
 				if (score > α) {
 					α = score;
 					if (depth == depth_minimax_ply) {
@@ -357,7 +398,7 @@ public class Engine {
 		else {
 			for (int i = moves.nextSetBit(0); i >= 0; i = moves.nextSetBit(i + 1)) {
 				board.play_move(i);
-				β = Math.min(β, alphabeta(board, getAllConsidearableMoves(board), depth - 1, α, β, true));
+				β = Math.min(β, alphabeta(board, getAllMoves(board), depth - 1, α, β, true));
 				board.undo_move(i);
 				if (β <= α) break; // (* α cut-off *)
 			}

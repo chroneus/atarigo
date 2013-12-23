@@ -44,7 +44,7 @@ public class EngineTest {
 " · · W · · · · · ·\r\n" + 
 " · · W · · · · · ·\r\n" + 
 "");
-		System.out.println(engine.filterBoardWithRandom(board, engine.getAllConsidearableMoves(board),10));
+		System.out.println(engine.filterBoardWithRandom(board, engine.getAllMoves(board),10));
 		
 
 	}
@@ -63,7 +63,7 @@ public class EngineTest {
 " · · · · · · · · ·\r\n" + 
 "");
 
-	assertNotNull(engine.getAllConsidearableMoves(board));
+	assertNotNull(engine.getAllMoves(board));
 	}
 	
 	
@@ -83,7 +83,7 @@ public class EngineTest {
 		BitBoard groupToKill=new BitBoard();
 		groupToKill.set(30);
 		assertNull(engine.checkLadder(board, groupToKill));
-		assertFalse(engine.getAllConsidearableMoves(board).get(47));
+		assertFalse(engine.getAllMoves(board).get(47));
 		board=new Board(
 				" · · · · · · · · ·\r\n" + 
 				" · · · · · · · · ·\r\n" + 
