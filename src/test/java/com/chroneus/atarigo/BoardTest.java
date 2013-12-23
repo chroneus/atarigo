@@ -57,33 +57,30 @@ public class BoardTest {
 
 	@Test
 	public void connectedGroups() {
-		Board board=new Board(
-				" · · · · · · · · ·\r\n" + 
-				" · · · · W B · · ·\r\n" + 
-				" · · B B W B · · ·\r\n" + 
-				" · · W W B B · · ·\r\n" + 
-				" · · · · · B · · ·\r\n" + 
-				" · · · · W B W W ·\r\n" + 
-				" · · · · W W B W ·\r\n" + 
-				" · · · · · B B · ·\r\n" + 
-				" · · · · · · · · ·");
+		board.loadSGFLine(";B[cc];W[cd];B[dc];W[dd];B[ed];W[ec];B[fc];W[eb];B[fd];W[ef];B[fb];W[hf];B[ff];W[fg];B[gg];W[gf];B[fe];W[hg];B[fh];W[eg];B[gh]");
 		assertEquals(board.connectedGroup(false).length, 3);
 		assertEquals(board.connectedGroup(true).length, 4);
-		
-		 board=new Board(
-				" · · · B · · · · ·\r\n" + 
-				" · W B · · B · · ·\r\n" + 
-				" · · W B · B · · ·\r\n" + 
-				" · W W · B · · · ·\r\n" + 
-				" · · · · · B B · ·\r\n" + 
-				" · W W · · · · · ·\r\n" + 
-				" · · · W · B B · ·\r\n" + 
-				" · W W · · · · · ·\r\n" + 
-				" · · · · · · · · ·");
-		assertEquals(board.connectedGroup(false).length, 7);
-		assertEquals(board.connectedGroup(true).length, 5);
 	}
   
+	
+	@Test
+	public void connectedGroup() {
+		board.play_move(false, "A3");
+		board.play_move(false, "A2");
+		board.play_move(false, "A4");
+		board.play_move(false, "B4");
+		board.play_move(false, "C4");
+		board.play_move(false, "C2");
+		board.play_move(false, "C3");
+		board.play_move(false, "C6");
+		board.play_move(false, "D6");
+		board.play_move(false, "E7");
+		board.play_move(true, "A1");
+		BitBoard[] lists = board.connectedGroup(false);
+		for (int i = 0; i < lists.length; i++) {
+		//	System.out.println(lists[i]);
+		}
+	}
 
 	@Test
 	public void getPossibleMoves() {

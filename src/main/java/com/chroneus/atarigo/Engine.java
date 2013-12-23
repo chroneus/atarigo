@@ -15,8 +15,8 @@ public class Engine {
 	public static final byte SIZE = Board.SIZE;
 	private static final boolean DEBUG = false;
 	boolean am_i_white = false;
-    BitBoard[] white_conn_strong,black_conn_strong;
-    WeakConnection []white, black;
+	public BitBoard[] white_connected,black_connected;
+    public WeakConnection[] white,black;
 	public Engine() {
 	}
 
@@ -64,7 +64,8 @@ public class Engine {
 			return Board.convertToGTPMove(possible_moves.nextSetBit(0));
 		}
 	//	possible_moves = filterBoardWithRandom(board, possible_moves,1+possible_moves.cardinality()/4);
-		int best_value = alphabeta(board, possible_moves, depth_minimax_ply, -50, 50, true);
+	//	possible_moves=filterWeakMoves(board,possible_moves);
+		int best_value = alphabeta(board, possible_moves, depth_minimax_ply, Integer.MIN_VALUE, Integer.MAX_VALUE, true);
 		if (DEBUG) {
 			System.out.println(best_board);
 			System.out.println(best_value + "=" + countBoard(best_board));
@@ -83,6 +84,10 @@ public class Engine {
 		return Board.convertToGTPMove(move.nextSetBit(0));
 	}
 
+	private BitBoard filterWeakMoves(Board board, BitBoard possible_moves) {
+		
+		return null;
+	}
 
 	/**
 	 * subset of @param possible_moves on @param board which contains several
