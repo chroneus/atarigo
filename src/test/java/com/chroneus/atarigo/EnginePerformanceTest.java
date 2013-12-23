@@ -51,7 +51,7 @@ public class EnginePerformanceTest {
 		}
 	}
 
-	// @Test  // for demo game uncomment me
+	 @Test  // for demo game uncomment me
 	public void testPlay() {
 		long begin = System.currentTimeMillis();
 		String move = "";

@@ -3,11 +3,12 @@ package com.chroneus.atarigo;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import sun.awt.VerticalBagLayout;
 
 public class Board implements Cloneable {
 	BitBoard black = new BitBoard();
 	BitBoard white = new BitBoard();
-    
+
 	public boolean is_white_next = false;
 
 	public static byte SIZE = 9;
@@ -23,8 +24,10 @@ public class Board implements Cloneable {
 			String[] chars = lines[x].trim().split(" ");
 			for (int y = 0; y < SIZE; y++) {
 				chars[y].trim();
-				if (chars[y].equalsIgnoreCase("W")) white.set(x, y);
-				if (chars[y].equalsIgnoreCase("B")) black.set(x, y);
+				if (chars[y].equalsIgnoreCase("W"))
+					white.set(x, y);
+				if (chars[y].equalsIgnoreCase("B"))
+					black.set(x, y);
 			}
 		}
 		is_white_next = black.cardinality() > white.cardinality();
@@ -50,16 +53,19 @@ public class Board implements Cloneable {
 	public static String convertToGTPMove(int position) {
 		char first_letter = 'A';
 		first_letter += position % SIZE;
-		if (first_letter >= 'I') first_letter += 1;
+		if (first_letter >= 'I')
+			first_letter += 1;
 		int second_number = SIZE - position / SIZE;
 		return "" + first_letter + second_number;
 	}
 
 	public static int convertFromGTPMove(String move) {
 		char first_letter = move.charAt(0);
-		if (first_letter >= 'I') first_letter -= 1;
+		if (first_letter >= 'I')
+			first_letter -= 1;
 		int horizontal_position = first_letter - 'A';
-		return horizontal_position + (SIZE - Integer.parseInt(move.substring(1))) * SIZE;
+		return horizontal_position
+				+ (SIZE - Integer.parseInt(move.substring(1))) * SIZE;
 	}
 
 	public static String convertToSGFMove(int position) {
@@ -95,8 +101,7 @@ public class Board implements Cloneable {
 		}
 		if (is_white) {
 			white.set(convertFromGTPMove(move));
-		}
-		else {
+		} else {
 			black.set(convertFromGTPMove(move));
 		}
 		this.is_white_next = !is_white;
@@ -109,8 +114,7 @@ public class Board implements Cloneable {
 	public void play_move(boolean is_white, int move) {
 		if (is_white) {
 			white.set(move);
-		}
-		else {
+		} else {
 			black.set(move);
 		}
 		this.is_white_next = !is_white_next;
@@ -127,8 +131,7 @@ public class Board implements Cloneable {
 
 		if (!is_white_next) {
 			white.clear(move);
-		}
-		else {
+		} else {
 			black.clear(move);
 		}
 		this.is_white_next = !this.is_white_next;
@@ -166,11 +169,12 @@ public class Board implements Cloneable {
 		}
 
 	}
-    
-	public Board fillBoardWithNearestStones(int depth){
+
+	public Board fillBoardWithNearestStones(int depth) {
 		Board board = (Board) this.clone();
-		while (depth!=0 && 
-				board.white.cardinality() + board.black.cardinality() < SIZE * SIZE) {
+		while (depth != 0
+				&& board.white.cardinality() + board.black.cardinality() < SIZE
+						* SIZE) {
 			depth--;
 			if (board.is_white_next) {
 				BitBoard whiteaddon = board.white.nearest_stones();
@@ -190,12 +194,13 @@ public class Board implements Cloneable {
 		}
 		return board;
 	}
-	
+
 	public BitBoard growGroupFromSeed(BitBoard seed) {
 		BitBoard test = (BitBoard) seed.clone();
 		test.and(white);
 		boolean is_black = false;
-		if (test.isEmpty()) is_black = true;
+		if (test.isEmpty())
+			is_black = true;
 		BitBoard result = (BitBoard) seed.clone();
 		BitBoard bitboard;
 		do {
@@ -220,7 +225,8 @@ public class Board implements Cloneable {
 	public int minLiberties(BitBoard[] connected) {
 		int minLiberties = 255;
 		for (int i = 0; i < connected.length; i++) {
-			minLiberties = Math.min(minLiberties, getLiberties(connected[i]).cardinality());
+			minLiberties = Math.min(minLiberties, getLiberties(connected[i])
+					.cardinality());
 		}
 		return minLiberties;
 	}
@@ -240,10 +246,9 @@ public class Board implements Cloneable {
 	public BitBoard[] connectedGroup(boolean is_white) {
 
 		if (is_white) {
-			return connectedGroup(this.white,this.black);
-		}
-		else {
-			return connectedGroup(this.black,this.white);
+			return connectedGroup(this.white, this.black);
+		} else {
+			return connectedGroup(this.black, this.white);
 		}
 
 	}
@@ -251,38 +256,132 @@ public class Board implements Cloneable {
 	/**
 	 * list of connected groups splitted from existing stones
 	 */
-	public BitBoard[] connectedGroup(BitBoard stones,BitBoard opponent_stones) {
-		
+	public BitBoard[] connectedGroup(BitBoard stones, BitBoard opponent_stones) {
+
 		BitBoard stones_to_split = (BitBoard) stones.clone();
-		
-		BitBoard horizontalnear=stones_to_split.get_right_nearest_stones();
+		ArrayList<BitBoard> resultList = new ArrayList<BitBoard>();
+
+		BitBoard horizontalnear = stones_to_split.get_right_nearest_stones();
 		horizontalnear.and(stones_to_split);
 		horizontalnear.or(horizontalnear.get_left_nearest_stones());
-		BitBoard horizontal_bamboo=horizontalnear.get_bottom_nearest_stones();
-		horizontal_bamboo.andNot(opponent_stones);
-		horizontal_bamboo.andNot(opponent_stones.get_right_nearest_stones());
-		horizontal_bamboo.and(horizontalnear);
-		
-		
-		BitBoard verticalnear=stones_to_split.get_bottom_nearest_stones();
+		int element = horizontalnear.nextSetBit(0);
+		BitBoard seed = null;
+		while (element != -1) {
+			if (seed == null)
+				seed = new BitBoard();
+			seed.set(element);
+			element++;
+			if (!horizontalnear.get(element) || element % SIZE == 0) {
+				resultList.add(seed);
+				seed = null;
+				element = horizontalnear.nextSetBit(element);
+			}
+		}
+
+		BitBoard verticalnear = stones_to_split.get_bottom_nearest_stones();
 		verticalnear.and(stones_to_split);
 		verticalnear.or(verticalnear.get_top_nearest_stones());
-		BitBoard vertical_bamboo=verticalnear.get_right_nearest_stones();
-		vertical_bamboo.andNot(opponent_stones);
-		vertical_bamboo.andNot(opponent_stones.get_bottom_nearest_stones());
-		vertical_bamboo.and(verticalnear);
-		
-		ArrayList<BitBoard> groups = new ArrayList<BitBoard>();
-		
-//		int element;
-//		while (!stones_to_split.isEmpty()) {
-//			element = stones_to_split.nextSetBit(0);
-//			BitBoard group = new BitBoard(SIZE * SIZE);
-//			addElementToGroup(group, stones_to_split, element);
-//			groups.add(group);
-//		}
-		BitBoard[] result = new BitBoard[groups.size()];
-		result = groups.toArray(result);
+
+		BitBoard intersection = (BitBoard) horizontalnear.clone();
+		intersection.and(verticalnear);
+        stones_to_split.andNot(horizontalnear);
+        stones_to_split.andNot(verticalnear);
+		element = verticalnear.nextSetBit(0);
+		seed = null;
+		while (element != -1) {
+			if (seed == null)
+				seed = new BitBoard();
+			for (int i = 0; verticalnear.get(element + SIZE * i); i++) {
+				seed.set(element + SIZE * i);
+				verticalnear.clear(element + SIZE * i);
+			}
+			resultList.add(seed);
+			seed = null;
+			element = verticalnear.nextSetBit(element);
+		}
+		// merge 2 groups in intersection
+		element = intersection.nextSetBit(0);
+
+		while (element != -1) {
+			BitBoard a = null, b = null;
+			for (BitBoard boards : resultList) {
+				if (boards.get(element)) {
+					if (a == null)
+						a = boards;
+					else
+						b = boards;
+				}
+			}
+			if(a!=null && b!=null){
+			resultList.remove(a);
+			resultList.remove(b);
+			a.or(b);
+			resultList.add(a);
+			}
+			element = intersection.nextSetBit(element + 1);
+
+		}
+		for (element= stones_to_split.nextSetBit(0);element >= 0; element = stones_to_split.nextSetBit(element + 1)){
+			BitBoard singlecell=new BitBoard();
+			singlecell.set(element);
+			resultList.add(singlecell);
+		}
+		// BitBoard horizontal_bamboo =
+		// horizontalnear.get_bottom_nearest_stones();
+		// horizontal_bamboo.andNot(opponent_stones);
+		// horizontal_bamboo.andNot(opponent_stones.get_right_nearest_stones());
+		// horizontal_bamboo.and(horizontalnear);
+
+		// BitBoard vertical_bamboo = verticalnear.get_right_nearest_stones();
+		// vertical_bamboo.andNot(opponent_stones);
+		// vertical_bamboo.andNot(opponent_stones.get_bottom_nearest_stones());
+		// vertical_bamboo.and(verticalnear);
+
+		// ArrayList<BitBoard> group_hb = new ArrayList<BitBoard>();
+		// int element = horizontal_bamboo.nextSetBit(0);
+		// BitBoard seed = null;
+		// while (element != -1) {
+		// if (seed == null)
+		// seed = new BitBoard();
+		// seed.set(element);
+		// seed.set(element + SIZE + SIZE);
+		// horizontal_bamboo.clear(element + SIZE + SIZE);
+		// if ((element + 1) % SIZE != 0 && horizontal_bamboo.get(element + 1))
+		// {
+		// element = element + 1;
+		// } else {
+		// group_hb.add(seed);
+		// seed = null;
+		// element = horizontal_bamboo.nextSetBit(element);
+		// }
+		// }
+		// ArrayList<BitBoard> group_vb = new ArrayList<BitBoard>();
+		// element = vertical_bamboo.nextSetBit(0);
+		// seed = null;
+		// while (element != -1) {
+		// if (seed == null)
+		// seed = new BitBoard();
+		// seed.set(element);
+		// seed.set(element + 1 + 1);
+		// vertical_bamboo.clear(element + 1 + 1);
+		// if ( vertical_bamboo.get(element + SIZE)) {
+		// element = element + SIZE;
+		// } else {
+		// group_vb.add(seed);
+		// seed = null;
+		// element = vertical_bamboo.nextSetBit(element);
+		// }
+		// }
+
+		// int element;
+		// while (!stones_to_split.isEmpty()) {
+		// element = stones_to_split.nextSetBit(0);
+		// BitBoard group = new BitBoard(SIZE * SIZE);
+		// addElementToGroup(group, stones_to_split, element);
+		// groups.add(group);
+		// }
+		BitBoard[] result = new BitBoard[resultList.size()];
+		result = resultList.toArray(result);
 		return result;
 	}
 
@@ -326,7 +425,6 @@ public class Board implements Cloneable {
 		return black.get(move);
 	}
 
-
 	@Override
 	protected Object clone() {
 
@@ -345,10 +443,12 @@ public class Board implements Cloneable {
 			}
 		}
 		for (int i = 0; i < black.size(); i++) {
-			if (black.get(i)) pseudoGraphics[i / SIZE][i % SIZE] = 'B';
+			if (black.get(i))
+				pseudoGraphics[i / SIZE][i % SIZE] = 'B';
 		}
 		for (int j = 0; j < white.size(); j++) {
-			if (white.get(j)) pseudoGraphics[j / SIZE][j % SIZE] = 'W';
+			if (white.get(j))
+				pseudoGraphics[j / SIZE][j % SIZE] = 'W';
 		}
 		StringBuffer out = new StringBuffer();
 		for (int x = 0; x < pseudoGraphics.length; x++) {
@@ -372,37 +472,48 @@ public class Board implements Cloneable {
 		open_eyes.andNot(black);
 		open_eyes.andNot(white);
 		eyes.andNot(open_eyes.nearest_stones());
-		BitBoard first_line_cut = (BitBoard) BoardConstant.FirstLine.clone();//test it with one possible cut
+		BitBoard first_line_cut = (BitBoard) BoardConstant.FirstLine.clone();// test
+																				// it
+																				// with
+																				// one
+																				// possible
+																				// cut
 		first_line_cut.and(eyes);
 		BitBoard diagonal_first_line = first_line_cut.diagonal_nearest_stones();
 		if (am_i_white)
-			diagonal_first_line.andNot(white);//or and(black)
+			diagonal_first_line.andNot(white);// or and(black)
 		else
 			diagonal_first_line.andNot(black);
 		eyes.andNot(diagonal_first_line.diagonal_nearest_stones());
-	    BitBoard non_first_line = (BitBoard) eyes.clone();//test it with two diagonal cuts
-	    non_first_line.andNot(first_line_cut);
-	    BitBoard diagonal_non_first_line=non_first_line.diagonal_nearest_stones();
+		BitBoard non_first_line = (BitBoard) eyes.clone();// test it with two
+															// diagonal cuts
+		non_first_line.andNot(first_line_cut);
+		BitBoard diagonal_non_first_line = non_first_line
+				.diagonal_nearest_stones();
 		if (am_i_white)
-			diagonal_non_first_line.andNot(white);//or and(black)
+			diagonal_non_first_line.andNot(white);// or and(black)
 		else
 			diagonal_non_first_line.andNot(black);
-	    diagonal_non_first_line.diagonal_nearest_stones().and(non_first_line);//possible cut
-		for (int i = diagonal_non_first_line.nextSetBit(0); i >= 0; i = diagonal_non_first_line.nextSetBit(i + 1)) {
-			BitBoard check_i=new BitBoard();
+		diagonal_non_first_line.diagonal_nearest_stones().and(non_first_line);// possible
+																				// cut
+		for (int i = diagonal_non_first_line.nextSetBit(0); i >= 0; i = diagonal_non_first_line
+				.nextSetBit(i + 1)) {
+			BitBoard check_i = new BitBoard();
 			check_i.set(i);
-			check_i=check_i.diagonal_nearest_stones();
+			check_i = check_i.diagonal_nearest_stones();
 			if (am_i_white)
-				check_i.andNot(white);//or and(black)
+				check_i.andNot(white);// or and(black)
 			else
 				check_i.andNot(black);
-			if(check_i.cardinality()>1) eyes.clear(i);
-		}		
+			if (check_i.cardinality() > 1)
+				eyes.clear(i);
+		}
 		return eyes;
 	}
 
 	// TODO cache all transformed?
-	public static BitBoard containsSubBitBoard(BitBoard large, BitBoard subset) throws Exception {
+	public static BitBoard containsSubBitBoard(BitBoard large, BitBoard subset)
+			throws Exception {
 		BitBoard result = new BitBoard(large.getXsize(), large.getYsize());
 		HashSet<BitBoard> subsetTransformed = new HashSet<BitBoard>();
 		BitBoard rotate90subset = subset.rotate90();
@@ -420,9 +531,11 @@ public class Board implements Cloneable {
 
 		for (BitBoard subsetTransform : subsetTransformed) {
 			for (byte x = 0; x <= large.getXsize() - subsetTransform.getXsize(); x++) {
-				for (byte y = 0; y <= large.getYsize() - subsetTransform.getYsize(); y++) {
+				for (byte y = 0; y <= large.getYsize()
+						- subsetTransform.getYsize(); y++) {
 					BitBoard test = (BitBoard) large.clone();
-					BitBoard moved_transform = subsetTransform.moveXY(x, y, large.getXsize(), large.getYsize());
+					BitBoard moved_transform = subsetTransform.moveXY(x, y,
+							large.getXsize(), large.getYsize());
 					test.and(moved_transform);
 					if (test.equals(moved_transform)) {
 						result.or(moved_transform);
@@ -446,7 +559,7 @@ public class Board implements Cloneable {
 	}
 
 	public boolean isClear(byte i, byte j) {
-		return !black.get(i, j)&&!white.get(i, j);
+		return !black.get(i, j) && !white.get(i, j);
 	}
 
 }

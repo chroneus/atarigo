@@ -80,8 +80,8 @@ public class BoardTest {
 				" · · · W · B B · ·\r\n" + 
 				" · W W · · · · · ·\r\n" + 
 				" · · · · · · · · ·");
-		assertEquals(board.connectedGroup(false).length, 1);
-		assertEquals(board.connectedGroup(true).length, 1);
+		assertEquals(board.connectedGroup(false).length, 7);
+		assertEquals(board.connectedGroup(true).length, 5);
 	}
   
 

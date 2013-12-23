@@ -15,7 +15,8 @@ public class Engine {
 	public static final byte SIZE = Board.SIZE;
 	private static final boolean DEBUG = false;
 	boolean am_i_white = false;
-
+    BitBoard[] white_conn_strong,black_conn_strong;
+    WeakConnection []white, black;
 	public Engine() {
 	}
 
