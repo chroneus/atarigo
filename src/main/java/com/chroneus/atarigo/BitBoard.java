@@ -159,7 +159,7 @@ public class BitBoard implements Cloneable {
 
 	@Override
 	public int hashCode() {
-		return (int) (a0 * a1 * xsize * ysize) >>> 32;
+		return (int)(a0 ^ (a0>> 32) ^ a1 ^ (a1 >> 32)) ;
 	}
 	
 
