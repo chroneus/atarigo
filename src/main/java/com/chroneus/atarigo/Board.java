@@ -193,6 +193,22 @@ public class Board implements Cloneable {
 		return board;
 	}
 	
+	public Board getMoyo(BitBoard testgroup){
+		Board board=(Board) this.clone();
+		boolean is_white=this.isWhite(testgroup.nextSetBit(0));
+		if(is_white){
+			testgroup.andNot(board.black);
+			testgroup.andNot(board.black.nearest_stones());
+			board.white.or(testgroup);
+		}else{
+			testgroup.andNot(board.white);
+			testgroup.andNot(board.white.nearest_stones());
+			board.black.or(testgroup);
+		}
+
+		return board;
+	}
+	
 	public BitBoard growGroupFromSeed(BitBoard seed) {
 		BitBoard test = (BitBoard) seed.clone();
 		test.and(white);
@@ -452,6 +468,11 @@ public class Board implements Cloneable {
 
 	public boolean isClear(byte i, byte j) {
 		return !black.get(i, j)&&!white.get(i, j);
+	}
+
+	public void or(Board board) {
+		this.black.or(board.black);
+		this.white.or(board.white);
 	}
 
 }

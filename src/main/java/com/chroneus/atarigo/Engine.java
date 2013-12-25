@@ -16,7 +16,6 @@ public class Engine {
 	private static final boolean DEBUG = false;
 	boolean am_i_white = false;
 	public BitBoard[] white_connected, black_connected;
-
 	public Engine() {
 		white_connected = new BitBoard[0];
 		black_connected = new BitBoard[0];
@@ -45,9 +44,7 @@ public class Engine {
 	 * moves as good shape, good line, max territory
 	 */
 	public String doMove(Board board) {
-		this.current_board = (Board) board.clone();
-		this.white_connected = board.connectedGroup(Board.WHITE);
-		this.black_connected = board.connectedGroup(Board.BLACK);
+		cacheConnected(board);
 		this.am_i_white = board.is_white_next;
 		if (this.result != null) {
 			if (this.result == 1)
@@ -181,15 +178,19 @@ public class Engine {
 				/ random_game_to_check;
 
 	}
-
+    
+	
+	private void cacheConnected(Board board){
+		this.current_board = (Board) board.clone();
+		this.white_connected = board.connectedGroup(Board.WHITE);
+		this.black_connected = board.connectedGroup(Board.BLACK);
+	}
 	/**
 	 * counting function
 	 */
 	private int countBoard(Board board) {
 		int myliberties = 0;
 		BitBoard[] connected, opponentconnected;
-		// connected = board.connectedGroup(am_i_white);
-		// opponentconnected= board.connectedGroup(!am_i_white);
 		if (am_i_white) {
 			connected = board.connectedGroupAddElement(this.current_board.white, this.white_connected, board.white);
 			opponentconnected = board.connectedGroupAddElement(this.current_board.black, this.black_connected,
@@ -353,9 +354,12 @@ public class Engine {
 
 	}
 
-	boolean is_weak_group(Board test_board, BitBoard seed) {
-		Board filled_board = test_board.fillBoardWithNearestStones(-1);
-		return filled_board.growGroupFromSeed(seed).cardinality() < 8;
+	boolean is_weak_group(Board board, BitBoard seed) {
+		BitBoard test_group=board.growGroupFromSeed(seed);
+		Board moyo = board.getMoyo(test_group.nearest_stones());
+		BitBoard moyo_test_group=moyo.growGroupFromSeed(seed);
+		moyo_test_group.andNot(test_group);
+		return moyo_test_group.cardinality() < 3;
 	}
 
 	/**

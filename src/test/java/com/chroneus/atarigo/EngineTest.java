@@ -48,7 +48,24 @@ public class EngineTest {
 		
 
 	}
-
+	@Test
+	public void testWeakGroup(){
+		board=new Board(
+				" · · · · · · · · ·\r\n" + 
+				" · · W W · · · · ·\r\n" + 
+				" · · W · B W W W ·\r\n" + 
+				" · · W · B · · B B\r\n" + 
+				" · · W B B · · B ·\r\n" + 
+				" · · W W W · · B ·\r\n" + 
+				" · · W · · · · B ·\r\n" + 
+				" · B B · · · · B ·\r\n" + 
+				" · · · · · · · · ·");
+		BitBoard seed=new BitBoard();
+		seed.set(40);
+		assertTrue(engine.is_weak_group(board, seed));
+		board.play_move(41);
+		assertFalse(engine.is_weak_group(board, seed));
+	}
 	@Test
 	public void testGetAllPossibleMoves() {
 		board=new Board(
@@ -66,7 +83,7 @@ public class EngineTest {
 	assertNotNull(engine.getAllMoves(board));
 	}
 	
-	
+
 	@Test
 	public void testLadder() {
 		board=new Board(
