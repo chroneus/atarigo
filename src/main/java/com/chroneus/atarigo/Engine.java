@@ -16,6 +16,7 @@ public class Engine {
 	private static final boolean DEBUG = false;
 	boolean am_i_white = false;
 	public BitBoard[] white_connected, black_connected;
+
 	public Engine() {
 		white_connected = new BitBoard[0];
 		black_connected = new BitBoard[0];
@@ -67,9 +68,11 @@ public class Engine {
 			board.undo_move(possible_moves.nextSetBit(0));
 			return Board.convertToGTPMove(possible_moves.nextSetBit(0));
 		}
-		// possible_moves = filterBoardWithRandom(board,
-		// possible_moves,1+possible_moves.cardinality()/4);
-		// possible_moves=filterWeakMoves(board,possible_moves);
+
+		possible_moves = weakGroupsCheck(board, possible_moves);
+		if(cardinality>40)
+		 possible_moves = filterBoardWithRandom(board,
+		 possible_moves,10);
 		int best_value = alphabeta(board, possible_moves, depth_minimax_ply, Integer.MIN_VALUE, Integer.MAX_VALUE, true);
 		if (DEBUG) {
 			System.out.println(best_board);
@@ -87,6 +90,31 @@ public class Engine {
 		if (DEBUG) System.out.println("best value " + best_value);
 		if (best_value < -30) return "resign";
 		return Board.convertToGTPMove(move.nextSetBit(0));
+	}
+
+	private BitBoard weakGroupsCheck(Board board, BitBoard possible_moves) {
+		BitBoard[] my_groups = getMyCached(board);
+		BitBoard[] opponent_groups = getOpponentCached(board);
+		BitBoard moves = new BitBoard();
+		boolean weakness_flag = false;
+		for (BitBoard my_group : my_groups) {
+			if (isWeakGroup(board, my_group)) {
+				weakness_flag = true;
+				moves.or(tryToRescueWeakGroup(board, my_group));
+			}
+		}
+		if (weakness_flag) return moves;
+		for (BitBoard opponent_group : opponent_groups) {
+			if (isWeakGroup(board, opponent_group)) {
+				int capture_move = tryToCaptureWeakGroup(board, opponent_group);
+				if (capture_move != -1) {
+					moves.set(capture_move);
+					return moves;
+
+				}
+			}
+		}
+		return possible_moves;
 	}
 
 	private int firstMoveDictionary(int nextSetBit) {
@@ -178,30 +206,20 @@ public class Engine {
 				/ random_game_to_check;
 
 	}
-    
-	
-	private void cacheConnected(Board board){
+
+	private void cacheConnected(Board board) {
 		this.current_board = (Board) board.clone();
 		this.white_connected = board.connectedGroup(Board.WHITE);
 		this.black_connected = board.connectedGroup(Board.BLACK);
 	}
+
 	/**
 	 * counting function
 	 */
 	private int countBoard(Board board) {
 		int myliberties = 0;
-		BitBoard[] connected, opponentconnected;
-		if (am_i_white) {
-			connected = board.connectedGroupAddElement(this.current_board.white, this.white_connected, board.white);
-			opponentconnected = board.connectedGroupAddElement(this.current_board.black, this.black_connected,
-					board.black);
-		}
-		else {
-			opponentconnected = board.connectedGroupAddElement(this.current_board.white, this.white_connected,
-					board.white);
-			connected = // board.connectedGroup(!am_i_white);
-			board.connectedGroupAddElement(this.current_board.black, this.black_connected, board.black);
-		}
+		BitBoard[] connected = getMyCached(board), opponentconnected = getOpponentCached(board);
+
 		for (BitBoard eachGroup : connected) {
 			int liberties = board.getLiberties(eachGroup).cardinality();
 			myliberties += liberties;
@@ -219,6 +237,25 @@ public class Engine {
 		}
 
 		return myliberties - opponentliberties + countTerritory(board);
+	}
+
+	private BitBoard[] getOpponentCached(Board board) {
+		if (am_i_white) {
+			return board.connectedGroupAddElement(this.current_board.black, this.black_connected, board.black);
+		}
+		else {
+			return board.connectedGroupAddElement(this.current_board.white, this.white_connected, board.white);
+
+		}
+	}
+
+	private BitBoard[] getMyCached(Board board) {
+		if (am_i_white) {
+			return board.connectedGroupAddElement(this.current_board.white, this.white_connected, board.white);
+		}
+		else {
+			return board.connectedGroupAddElement(this.current_board.black, this.black_connected, board.black);
+		}
 	}
 
 	/**
@@ -314,9 +351,9 @@ public class Engine {
 					if (checkLadder(board, check4liberties) != null) moves.clear(i);
 				}
 			}
-//			BitBoard seed = new BitBoard();
-//			seed.set(i);
-//			if (is_weak_group(board, seed)) moves.clear(i);
+			// BitBoard seed = new BitBoard();
+			// seed.set(i);
+			// if (is_weak_group(board, seed)) moves.clear(i);
 			board.undo_move(i);
 		}
 
@@ -354,27 +391,43 @@ public class Engine {
 
 	}
 
-	boolean is_weak_group(Board board, BitBoard seed) {
-		BitBoard test_group=board.growGroupFromSeed(seed);
+	boolean isWeakGroup(Board board, BitBoard seed) {
+		BitBoard test_group = board.growGroupFromSeed(seed);
 		Board moyo = board.getMoyo(test_group.nearest_stones());
-		BitBoard moyo_test_group=moyo.growGroupFromSeed(seed);
+		BitBoard moyo_test_group = moyo.growGroupFromSeed(seed);
 		moyo_test_group.andNot(test_group);
 		return moyo_test_group.cardinality() < 3;
 	}
 
 	/**
-	 * try to capture weak stones TODO
 	 */
-	int semeai(Board board, BitBoard stone_group) {
+	int tryToCaptureWeakGroup(Board board, BitBoard stone_group) {
 		if (board.getEyes(stone_group).cardinality() > 1) return -1;
 		BitBoard near_moves = stone_group.nearest_stones();
-		near_moves.and(getAllMoves(board));
+		BitBoard all_moves = getAllMoves(board);
+		if (all_moves.isEmpty()) return 100;
+		near_moves.and(all_moves);
 		for (int i = near_moves.nextSetBit(0); i >= 0; i = near_moves.nextSetBit(i + 1)) {
 			board.play_move(i);
-			if (semeai(board, stone_group) > 0) return i;
+			if (tryToRescueWeakGroup(board, stone_group).isEmpty()) return i;
 			board.undo_move(i);
 		}
 		return -1;
+	}
+
+	BitBoard tryToRescueWeakGroup(Board board, BitBoard stone_group) {
+		BitBoard result = new BitBoard();
+		if (board.getEyes(stone_group).cardinality() > 1) return result;
+		BitBoard near_moves = stone_group.nearest_stones();
+		BitBoard all_moves = getAllMoves(board);
+		if (all_moves.isEmpty()) return result;
+		near_moves.and(all_moves);
+		for (int i = near_moves.nextSetBit(0); i >= 0; i = near_moves.nextSetBit(i + 1)) {
+			board.play_move(i);
+			if (tryToCaptureWeakGroup(board, stone_group) == -1) result.set(i);
+			board.undo_move(i);
+		}
+		return result;
 	}
 
 	/**
