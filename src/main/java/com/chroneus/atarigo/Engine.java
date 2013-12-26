@@ -314,9 +314,9 @@ public class Engine {
 					if (checkLadder(board, check4liberties) != null) moves.clear(i);
 				}
 			}
-			BitBoard seed = new BitBoard();
-			seed.set(i);
-			if (is_weak_group(board, seed)) moves.clear(i);
+//			BitBoard seed = new BitBoard();
+//			seed.set(i);
+//			if (is_weak_group(board, seed)) moves.clear(i);
 			board.undo_move(i);
 		}
 
