@@ -16,6 +16,7 @@ public class Engine {
 	private static final boolean DEBUG = false;
 	boolean am_i_white = false;
 	public BitBoard[] white_connected, black_connected;
+	public WeakConnection white_connection, black_connection;
 
 	public Engine() {
 		white_connected = new BitBoard[0];

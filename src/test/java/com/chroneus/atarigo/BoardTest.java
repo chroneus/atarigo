@@ -90,7 +90,7 @@ public class BoardTest {
 	}
 
 
-	//@Test
+	@Test
 	public void getEye() {
 		board.loadSGFLine(";B[bc];W[bb];B[cb];W[ab];B[ca];W[ba];B[ac]");
 		BitBoard bitboard=new BitBoard();

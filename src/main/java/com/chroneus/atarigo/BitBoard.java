@@ -139,14 +139,14 @@ public class BitBoard implements Cloneable {
 		return bitBoard;
 	}
 
-	public BitBoard moveXY(byte x, byte y, byte wrap_size_x, byte wrap_size_y) throws Exception {
+	public BitBoard moveXY(byte x, byte y, byte wrap_size_x, byte wrap_size_y) {
 
 		BitBoard bitBoard = new BitBoard(wrap_size_x, wrap_size_y);
 		for (int i = nextSetBit(0); i >= 0; i = nextSetBit(i + 1)) {
 			int x0 = i / ysize, y0 = i % ysize;
 			int x1 = x0 + x;
 			int y1 = y0 + y;
-			if (x1 >= wrap_size_x || y1 >= wrap_size_y) throw new Exception("move pattern is out of result");
+			if (x1 >= wrap_size_x || y1 >= wrap_size_y) System.out.println("move pattern is out of result");
 			bitBoard.set(wrap_size_y * (x0 + x) + y0 + y);
 		}
 		return bitBoard;

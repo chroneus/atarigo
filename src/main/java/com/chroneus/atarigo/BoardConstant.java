@@ -16,6 +16,7 @@ public class BoardConstant {
 	public static final BitBoard BottomBorder = new BitBoard(SIZE,SIZE);
 
 	public static final BitBoard Square = new BitBoard(2,2);
+	public static final BitBoard Kosumi = new BitBoard(2,2);
 	public static final BitBoard EmptyTriangle = new BitBoard(2,2);
 	public static final BitBoard Bamboo = new BitBoard(3,2);
 	public static final BitBoard House = new BitBoard(3,3);
@@ -59,6 +60,7 @@ public static void init(){
 	Square.flipInRange(0, 3);
 	EmptyTriangle.flipInRange(0,2);
 	Tengen.set(SIZE*SIZE/2);
+	Kosumi.set(0);Kosumi.set(3);
 	Bamboo.set(0);Bamboo.set(1);Bamboo.set(4);Bamboo.set(5);
 	House.set(0);House.set(2);House.set(6);House.set(7);
 	TigerMouth.set(0);TigerMouth.set(3);TigerMouth.set(4);

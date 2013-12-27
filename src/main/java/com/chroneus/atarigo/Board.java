@@ -269,8 +269,23 @@ public class Board implements Cloneable {
 	/**
 	 * list of connected groups divided from existing stones
 	 */
+	public WeakConnection[] weakConnections(BitBoard[] groups) {
+		if(groups==null || groups.length==0) return new WeakConnection[0];
+		BitBoard total = new BitBoard();
+		for(BitBoard group:groups) total.or(group); 
+		BitBoard[]bamboo_connected = containsSubBitBoard(total, BoardConstant.Bamboo);
+		for (BitBoard bamboo:bamboo_connected){
+			//check foreign stones
+			
+		}
+		return new WeakConnection[0];
+	}
+	/**
+	 * list of connected groups divided from existing stones
+	 */
 	public BitBoard[] connectedGroup(BitBoard stones) {
 		BitBoard stoneslocal = (BitBoard) stones.clone();
+		BitBoard eyes= getEyes(stones);
 		ArrayList<BitBoard> groups = new ArrayList<BitBoard>();
 		int element;
 		while (!stoneslocal.isEmpty()) {
@@ -382,6 +397,9 @@ public class Board implements Cloneable {
 		return out.toString();
 	}
 
+	
+	
+	
 	public BitBoard getEyes(BitBoard test_group) {
 		BitBoard test_white = (BitBoard) test_group.clone();
 		test_white.and(white);
@@ -422,9 +440,8 @@ public class Board implements Cloneable {
 		return eyes;
 	}
 
-	// TODO cache all transformed?
-	public static BitBoard containsSubBitBoard(BitBoard large, BitBoard subset) throws Exception {
-		BitBoard result = new BitBoard(large.getXsize(), large.getYsize());
+	public static BitBoard[] containsSubBitBoard(BitBoard large, BitBoard subset)  {
+		List<BitBoard> resultList = new ArrayList<BitBoard>();
 		HashSet<BitBoard> subsetTransformed = new HashSet<BitBoard>();
 		BitBoard rotate90subset = subset.rotate90();
 		BitBoard rotate180subset = rotate90subset.rotate90();
@@ -446,12 +463,14 @@ public class Board implements Cloneable {
 					BitBoard moved_transform = subsetTransform.moveXY(x, y, large.getXsize(), large.getYsize());
 					test.and(moved_transform);
 					if (test.equals(moved_transform)) {
-						result.or(moved_transform);
+						resultList.add(moved_transform);
 					}
 				}
 			}
 
 		}
+		BitBoard[] result=new BitBoard[resultList.size()];
+		result=resultList.toArray(result);
 		return result;
 	}
 
