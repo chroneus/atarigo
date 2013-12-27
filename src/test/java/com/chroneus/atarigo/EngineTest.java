@@ -62,9 +62,9 @@ public class EngineTest {
 				" · · · · · · · · ·");
 		BitBoard seed=new BitBoard();
 		seed.set(40);
-		assertTrue(engine.isWeakGroup(board, seed));
+		assertTrue(engine.moyoGroupCardinality(board, seed)<2);
 		board.play_move(41);
-		assertFalse(engine.isWeakGroup(board, seed));
+		assertTrue(engine.moyoGroupCardinality(board, seed)>3);
 	}
 	@Test
 	public void testGetAllPossibleMoves() {

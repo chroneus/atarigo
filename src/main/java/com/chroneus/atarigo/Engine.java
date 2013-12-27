@@ -57,6 +57,8 @@ public class Engine {
 		if (board.white.cardinality() == 0)
 			return Board.convertToGTPMove(firstMoveDictionary(board.black.nextSetBit(0)));
 		BitBoard possible_moves = getAllMoves(board);
+
+		possible_moves = weakGroupsCheck(board, possible_moves);
 		if (possible_moves == null || possible_moves.isEmpty()) {
 			this.result = -1;
 			return "resign";
@@ -69,10 +71,6 @@ public class Engine {
 			return Board.convertToGTPMove(possible_moves.nextSetBit(0));
 		}
 
-		possible_moves = weakGroupsCheck(board, possible_moves);
-		if(cardinality>40)
-		 possible_moves = filterBoardWithRandom(board,
-		 possible_moves,10);
 		int best_value = alphabeta(board, possible_moves, depth_minimax_ply, Integer.MIN_VALUE, Integer.MAX_VALUE, true);
 		if (DEBUG) {
 			System.out.println(best_board);
@@ -88,24 +86,25 @@ public class Engine {
 			move.andNot(board.black);
 		}
 		if (DEBUG) System.out.println("best value " + best_value);
-		if (best_value < -30) return "resign";
+		if (best_value < -100) return "resign";
 		return Board.convertToGTPMove(move.nextSetBit(0));
 	}
 
-	private BitBoard weakGroupsCheck(Board board, BitBoard possible_moves) {
+	private BitBoard weakGroupsCheck(Board test_board, BitBoard possible_moves) {
+		Board board=(Board)test_board.clone();
 		BitBoard[] my_groups = getMyCached(board);
 		BitBoard[] opponent_groups = getOpponentCached(board);
 		BitBoard moves = new BitBoard();
 		boolean weakness_flag = false;
 		for (BitBoard my_group : my_groups) {
-			if (isWeakGroup(board, my_group)) {
+			if (moyoGroupCardinality(board, my_group)<2) {
 				weakness_flag = true;
 				moves.or(tryToRescueWeakGroup(board, my_group));
 			}
 		}
 		if (weakness_flag) return moves;
 		for (BitBoard opponent_group : opponent_groups) {
-			if (isWeakGroup(board, opponent_group)) {
+			if (moyoGroupCardinality(board, opponent_group)<3) {
 				int capture_move = tryToCaptureWeakGroup(board, opponent_group);
 				if (capture_move != -1) {
 					moves.set(capture_move);
@@ -391,12 +390,12 @@ public class Engine {
 
 	}
 
-	boolean isWeakGroup(Board board, BitBoard seed) {
+	int moyoGroupCardinality(Board board, BitBoard seed) {
 		BitBoard test_group = board.growGroupFromSeed(seed);
 		Board moyo = board.getMoyo(test_group.nearest_stones());
 		BitBoard moyo_test_group = moyo.growGroupFromSeed(seed);
 		moyo_test_group.andNot(test_group);
-		return moyo_test_group.cardinality() < 3;
+		return moyo_test_group.cardinality() ;
 	}
 
 	/**
