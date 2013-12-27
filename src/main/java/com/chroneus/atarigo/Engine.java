@@ -94,15 +94,22 @@ public class Engine {
 		Board board=(Board)test_board.clone();
 		BitBoard[] my_groups = getMyCached(board);
 		BitBoard[] opponent_groups = getOpponentCached(board);
-		BitBoard moves = new BitBoard();
-		boolean weakness_flag = false;
+		BitBoard moves = (BitBoard) possible_moves.clone();
+		boolean urgent_move=false;
+		int dummy_move=possible_moves.nextSetBit(0);
+		board.play_move(dummy_move);
 		for (BitBoard my_group : my_groups) {
-			if (moyoGroupCardinality(board, my_group)<2) {
-				weakness_flag = true;
-				moves.or(tryToRescueWeakGroup(board, my_group));
+			int current_cardinality=moyoGroupCardinality(board, my_group);
+			if (current_cardinality<3) {
+				if(tryToCaptureWeakGroup(board, my_group)!=-1){
+					urgent_move=true;
+					moves.and(tryToRescueWeakGroup(board, my_group));
+				}
 			}
 		}
-		if (weakness_flag) return moves;
+		board.undo_move(dummy_move);
+		if(urgent_move) return moves;
+		
 		for (BitBoard opponent_group : opponent_groups) {
 			if (moyoGroupCardinality(board, opponent_group)<3) {
 				int capture_move = tryToCaptureWeakGroup(board, opponent_group);
@@ -224,7 +231,7 @@ public class Engine {
 			myliberties += liberties;
 			if (liberties < 2) return Integer.MIN_VALUE;
 			if (liberties == 2 && checkLadder(board, eachGroup) != null) return Integer.MIN_VALUE;
-			if (liberties == 3) myliberties -= 10;
+		
 		}
 		int opponentliberties = 0;
 
@@ -235,7 +242,7 @@ public class Engine {
 			if (liberties == 2 && checkLadder(board, eachGroup) != null) return Integer.MAX_VALUE;
 		}
 
-		return myliberties - opponentliberties + countTerritory(board);
+		return (myliberties - opponentliberties)/2 + countTerritory(board);
 	}
 
 	private BitBoard[] getOpponentCached(Board board) {
