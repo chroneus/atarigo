@@ -117,7 +117,12 @@ public class BitBoard implements Cloneable {
 		}
 		return false;
 	}
+    
+	public boolean intersects(BitBoard another) {
+		  return ((this.a0 & another.a0) != 0) ||((this.a1 & another.a1) != 0);
+	}
 
+	
 	public BitBoard mirror() {
 		BitBoard bitBoard = new BitBoard(xsize, ysize);
 		for (int i = nextSetBit(0); i >= 0; i = nextSetBit(i + 1)) {
