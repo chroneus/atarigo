@@ -269,16 +269,17 @@ public class Board implements Cloneable {
 	/**
 	 * list of connected groups divided from existing stones
 	 */
-	public WeakConnection[] weakConnections(BitBoard[] groups) {
-		if(groups==null || groups.length==0) return new WeakConnection[0];
-		BitBoard total = new BitBoard();
-		for(BitBoard group:groups) total.or(group); 
-		BitBoard[]bamboo_connected = containsSubBitBoard(total, BoardConstant.Bamboo);
-		for (BitBoard bamboo:bamboo_connected){
-			//check foreign stones
-			
+	public Set<WeakConnection> getWeakConnections(BitBoard[] groups, BitBoard opponent) {
+        Set<WeakConnection> connections=new HashSet<WeakConnection>(); 
+		if(groups==null || groups.length==0) return connections;
+
+		for(BitBoard test_group:groups)
+			for(BitBoard other_group:groups){
+				if(other_group.equals(test_group)||test_group.intersects(other_group)) continue;
+				connections.addAll(WeakConnection.checkWeakConnection(test_group,other_group,opponent));
+		    	
 		}
-		return new WeakConnection[0];
+		return connections;
 	}
 	/**
 	 * list of connected groups divided from existing stones
@@ -286,7 +287,7 @@ public class Board implements Cloneable {
 	public BitBoard[] connectedGroup(BitBoard stones) {
 		BitBoard stoneslocal = (BitBoard) stones.clone();
 		BitBoard eyes= getEyes(stones);
-		ArrayList<BitBoard> groups = new ArrayList<BitBoard>();
+		LinkedList<BitBoard> groups = new LinkedList<BitBoard>();
 		int element;
 		while (!stoneslocal.isEmpty()) {
 			element = stoneslocal.nextSetBit(0);
@@ -294,10 +295,13 @@ public class Board implements Cloneable {
 			addElementToGroup(group, stoneslocal, element);
 			groups.add(group);
 		}
+
+		
 		BitBoard[] result = new BitBoard[groups.size()];
 		result = groups.toArray(result);
 		return result;
 	}
+	
     
 	/**
 	 * list of connected groups divided from existing stones
@@ -440,40 +444,7 @@ public class Board implements Cloneable {
 		return eyes;
 	}
 
-	public static BitBoard[] containsSubBitBoard(BitBoard large, BitBoard subset)  {
-		List<BitBoard> resultList = new ArrayList<BitBoard>();
-		HashSet<BitBoard> subsetTransformed = new HashSet<BitBoard>();
-		BitBoard rotate90subset = subset.rotate90();
-		BitBoard rotate180subset = rotate90subset.rotate90();
-		BitBoard rotate270subset = rotate180subset.rotate90();
-		// 8 affinity transformation
-		subsetTransformed.add(subset);
-		subsetTransformed.add(rotate90subset);
-		subsetTransformed.add(rotate180subset);
-		subsetTransformed.add(rotate270subset);
-		subsetTransformed.add(subset.mirror());
-		subsetTransformed.add(rotate90subset.mirror());
-		subsetTransformed.add(rotate180subset.mirror());
-		subsetTransformed.add(rotate270subset.mirror());
-
-		for (BitBoard subsetTransform : subsetTransformed) {
-			for (byte x = 0; x <= large.getXsize() - subsetTransform.getXsize(); x++) {
-				for (byte y = 0; y <= large.getYsize() - subsetTransform.getYsize(); y++) {
-					BitBoard test = (BitBoard) large.clone();
-					BitBoard moved_transform = subsetTransform.moveXY(x, y, large.getXsize(), large.getYsize());
-					test.and(moved_transform);
-					if (test.equals(moved_transform)) {
-						resultList.add(moved_transform);
-					}
-				}
-			}
-
-		}
-		BitBoard[] result=new BitBoard[resultList.size()];
-		result=resultList.toArray(result);
-		return result;
-	}
-
+	
 	@Override
 	/**
 	 * do it in language without gc

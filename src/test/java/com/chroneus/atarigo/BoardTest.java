@@ -2,8 +2,7 @@ package com.chroneus.atarigo;
 
 import static org.junit.Assert.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -57,30 +56,38 @@ public class BoardTest {
 
 	@Test
 	public void connectedGroups() {
-		board.loadSGFLine(";B[cc];W[cd];B[dc];W[dd];B[ed];W[ec];B[fc];W[eb];B[fd];W[ef];B[fb];W[hf];B[ff];W[fg];B[gg];W[gf];B[fe];W[hg];B[fh];W[eg];B[gh]");
+board=new Board(" · · · · · · · · ·\r\n" + 
+				" · · · · W B · · ·\r\n" + 
+				" · · B B W B · · ·\r\n" + 
+				" · · W W B B · · ·\r\n" + 
+				" · · · · · B · · ·\r\n" + 
+				" · · · · W B W W ·\r\n" + 
+				" · · · · W W B W ·\r\n" + 
+				" · · · · · B B · ·\r\n" + 
+				" · · · · · · · · ·"
+				);
 		assertEquals(board.connectedGroup(false).length, 3);
 		assertEquals(board.connectedGroup(true).length, 4);
 	}
   
-	
 	@Test
-	public void connectedGroup() {
-		board.play_move(false, "A3");
-		board.play_move(false, "A2");
-		board.play_move(false, "A4");
-		board.play_move(false, "B4");
-		board.play_move(false, "C4");
-		board.play_move(false, "C2");
-		board.play_move(false, "C3");
-		board.play_move(false, "C6");
-		board.play_move(false, "D6");
-		board.play_move(false, "E7");
-		board.play_move(true, "A1");
-		BitBoard[] lists = board.connectedGroup(false);
-		for (int i = 0; i < lists.length; i++) {
-		//	System.out.println(lists[i]);
-		}
+	public void weakConnectedGroups() {
+board=new Board(" · · B B · · · · ·\r\n" + 
+				" · · · · W B · · ·\r\n" + 
+				" · · B B · B W · ·\r\n" + 
+				" · · W W B · · · ·\r\n" + 
+				" · · · · · · · · ·\r\n" + 
+				" · · · · W W W W ·\r\n" + 
+				" · · · · W · B W ·\r\n" + 
+				" · · · · · B B · ·\r\n" + 
+				" · · · · B · · · ·"
+				);
+Set<WeakConnection> set=board.getWeakConnections(board.connectedGroup(board.black), board.white);
+		assertEquals(set.size(), 3);
 	}
+  
+	
+	
 
 	@Test
 	public void getPossibleMoves() {
@@ -103,27 +110,9 @@ public class BoardTest {
 		board.clear();
 		board.loadSGFLine(";B[fc];B[gd];B[ge];B[ff];B[ee];B[ed];B[df];B[eg];W[fb];W[gb];W[eb];W[dc];W[dd];W[de];W[cf];W[eh];W[fg];W[gf];W[he];W[hd];W[hc];W[dg]");
 		
-		assertEquals(board.getEyes(board.black).cardinality(),1);
+	//	assertEquals(board.getEyes(board.black).cardinality(),1);
 	}
 
-	@Test
-	public void containsSubBitSet() throws Exception {
-		board.play_move(false, "A3");
-		board.play_move(false, "A2");
-		board.play_move(false, "A4");
-		board.play_move(false, "B4");
-		board.play_move(false, "C4");
-		board.play_move(false, "C2");
-		board.play_move(false, "C3");
-		board.play_move(false, "C6");
-		board.play_move(false, "D6");	
-		BitBoard connected=new BitBoard(2,2);
-		connected.set(0);
-		connected.set(1);
-		assertEquals(Board.containsSubBitBoard(board.black, connected),board.black);
-		board.play_move(false, "E7");
-		assertNotSame(Board.containsSubBitBoard(board.black, connected),board.black);
-	}
     
 	
 

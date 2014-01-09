@@ -1,5 +1,9 @@
 package com.chroneus.atarigo;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+
 /**
  * this class looks like two-dimension BitSet with constant size
  */
@@ -233,6 +237,39 @@ public class BitBoard implements Cloneable {
 		for (int bit = i; bit <= j; bit++) {
 			flip(bit);
 		}
+	}
+	public  BitBoard[] containsSubBitBoard( BitBoard subset)  {
+		List<BitBoard> resultList = new ArrayList<BitBoard>();
+		HashSet<BitBoard> subsetTransformed = new HashSet<BitBoard>();
+		BitBoard rotate90subset = subset.rotate90();
+		BitBoard rotate180subset = rotate90subset.rotate90();
+		BitBoard rotate270subset = rotate180subset.rotate90();
+		// 8 affinity transformation
+		subsetTransformed.add(subset);
+		subsetTransformed.add(rotate90subset);
+		subsetTransformed.add(rotate180subset);
+		subsetTransformed.add(rotate270subset);
+		subsetTransformed.add(subset.mirror());
+		subsetTransformed.add(rotate90subset.mirror());
+		subsetTransformed.add(rotate180subset.mirror());
+		subsetTransformed.add(rotate270subset.mirror());
+
+		for (BitBoard subsetTransform : subsetTransformed) {
+			for (byte x = 0; x <= this.getXsize() - subsetTransform.getXsize(); x++) {
+				for (byte y = 0; y <= this.getYsize() - subsetTransform.getYsize(); y++) {
+					BitBoard test = (BitBoard) this.clone();
+					BitBoard moved_transform = subsetTransform.moveXY(x, y, this.getXsize(), this.getYsize());
+					test.and(moved_transform);
+					if (test.equals(moved_transform)) {
+						resultList.add(moved_transform);
+					}
+				}
+			}
+
+		}
+		BitBoard[] result=new BitBoard[resultList.size()];
+		result=resultList.toArray(result);
+		return result;
 	}
 
 	@Override
