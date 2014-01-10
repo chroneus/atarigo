@@ -65,6 +65,17 @@ public class EngineTest {
 		assertTrue(engine.moyoGroupCardinality(board, seed)<2);
 		board.play_move(41);
 		assertTrue(engine.moyoGroupCardinality(board, seed)>3);
+		board=new Board("" +
+				" W W W W W B · · ·\r\n" + 
+				" · B B · W B B B B\r\n" + 
+				" · B W W W W B · B\r\n" + 
+				" · B W B B · B · B\r\n" + 
+				" · B W B B B B W B\r\n" + 
+				" · B W B · W · W B\r\n" + 
+				" · W W B B W W W ·\r\n" + 
+				" · · W W W W · · ·\r\n" + 
+				" · · · · · · · · ·\r\n" + 
+				"");
 	}
 	@Test
 	public void testGetAllPossibleMoves() {
